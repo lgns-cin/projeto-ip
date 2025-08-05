@@ -1,28 +1,39 @@
 import random as rd
 import pygame as pg
 
-gotap_sprite = pg.image.load("projeto-ip/sprites/gota p.png")
-gotam_sprite = pg.image.load("projeto-ip/sprites/gota m.png")
-gotag_sprite = pg.image.load("projeto-ip/sprites/gota g.png")
+gota_sprite = pg.image.load("projeto-ip/sprites/gota.png")
 
-class gota:
-    def __init__(self, tipo):
-        if tipo == 1:
-            self.tipo = 'gotap'
-        elif tipo == 2:
-            self.tipo = 'gotam'
+class Gota:
+    def __init__(self, tamanho):
+        self.sprite = pg.transform.scale(gota_sprite, (tamanho, tamanho))
+        self.tamanho = self.sprite.get_width()
+            
+    def posicao_gota(self, lado):
+        if lado == 2:
+            gota_x = 520
         else:
-            self.tipo = 'gotag'
+            gota_x = 240
         
-    def posicao_gota(self):
-        if self.tipo == 'gotap':
-            sprite_height = gotap_sprite.get_height()
-            return (rd.randint(0, 800 - sprite_height), 0, gotap_sprite)
-        elif self.tipo == 'gotam':
-            sprite_height = gotam_sprite.get_height()
-            return (rd.randint(0, 800 - sprite_height), 0, gotam_sprite)
-        else:
-            sprite_height = gotag_sprite.get_height()
-            return (rd.randint(0, 800 - sprite_height), 0, gotag_sprite)
+        gota_y = 0
+
+        return (gota_x, gota_y, self.sprite)
+    
+class Coletavel:
+    SPRITES = [
+        pg.image.load("projeto-ip/sprites/saia de filó.png"),
+        pg.image.load("projeto-ip/sprites/vida.png"),
+        pg.image.load("projeto-ip/sprites/agulha.png")
+    ]
+
+    def __init__(self, tipo, x, y):
+        self.tipo = tipo
+        self.sprite = Coletavel.SPRITES[tipo]
+        self.x = x
+        self.y = y
+
+    def desenhar(self, surface):
+        surface.blit(self.sprite, (self.x, self.y))
+        
+        
 
         
