@@ -9,7 +9,7 @@ pg.init()
 
 # Game window setup
 win = pg.display.set_mode((800, 600))
-map_sprite = pg.image.load("projeto-ip/sprites/map.png")
+map_sprite = pg.image.load("../resources/assets/map.png")
 map_sprite = pg.transform.scale(map_sprite, (800, 600))
 
 sair = False
@@ -55,9 +55,6 @@ while not sair:
 
     if gota_y >= 600:
         nova_gota = False
-
-    
-
 
     pg.display.flip()
     win.fill((0))
