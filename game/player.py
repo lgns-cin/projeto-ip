@@ -3,7 +3,7 @@ from pygame.locals import *
 
 class Player:
     def __init__(self, x, y):
-        self.sprite = pg.image.load("projeto-ip/resources/assets/player.png")
+        self.sprite = pg.image.load("../resources/assets/player.png")
         self.x = x
         self.y = y
         self.vel = 5  # velocidade do player
