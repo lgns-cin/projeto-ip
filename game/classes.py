@@ -1,7 +1,7 @@
 import random as rd
 import pygame as pg
 
-gota_sprite = pg.image.load("../resources/assets/gota.png")
+gota_sprite = pg.image.load("resources/assets/gota.png")
 
 class Gota:
     def __init__(self, tamanho):
@@ -20,9 +20,10 @@ class Gota:
     
 class Coletavel:
     SPRITES = [
-        pg.image.load("../resources/assets/saia de filó.png"),
-        pg.image.load("../resources/assets/vida.png"),
-        pg.image.load("../resources/assets/agulha.png")
+        pg.image.load("resources/assets/tecido.png"),
+        pg.image.load("resources/assets/vida.png"),
+        pg.image.load("resources/assets/agulha.png"),
+        pg.image.load("resources/assets/molde da saia.png")
     ]
 
     def __init__(self, tipo, x, y):
