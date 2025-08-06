@@ -6,8 +6,10 @@ WINDOW_TITLE = "Jogo"
 WINDOW_ICON = pygame.image.load("resources/assets/vida.png")  # temporário
 FPS = 60
 
-WINDOW_WIDTH = 512
-WINDOW_HEIGHT = 512
+WINDOW_WIDTH = 611
+WINDOW_HEIGHT = 611
+LANE_WIDTH = WINDOW_WIDTH / 13
+
 
 WINDOW_SIZE = (WINDOW_WIDTH, WINDOW_HEIGHT)
 
@@ -15,14 +17,19 @@ WINDOW_SIZE = (WINDOW_WIDTH, WINDOW_HEIGHT)
 CENTER_X = WINDOW_WIDTH / 2
 CENTER_Y = WINDOW_HEIGHT / 2
 
-LEFT_WALL_EDGE = 156
+LEFT_WALL_EDGE = LANE_WIDTH * 3
 RIGHT_WALL_EDGE = WINDOW_WIDTH - LEFT_WALL_EDGE
 
 # --- SPRITES --- #
 MAP_SPRITE = pygame.image.load("resources/assets/map_p4.png")
 WALL_SPRITE = pygame.image.load("resources/assets/wall_piece.png")
 
-PLAYER_SPRITE = pygame.image.load("resources/assets/player.png")
+# Carregar e redimensionar player sprite para o tamanho da lane
+PLAYER_SPRITE = pygame.transform.scale(
+    pygame.image.load("resources/assets/teireza.png"),
+    (int(LANE_WIDTH), int(LANE_WIDTH)),
+)
+
 OBSTACLE_SPRITE = pygame.image.load("resources/assets/gota.png")
 
 __all__ = [
@@ -40,4 +47,5 @@ __all__ = [
     "PLAYER_SPRITE",
     "OBSTACLE_SPRITE",
     "WALL_SPRITE",
+    "LANE_WIDTH",
 ]
