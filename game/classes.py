@@ -2,7 +2,7 @@ from pygame.surface import Surface
 from pygame.sprite import Sprite
 from pygame import transform
 
-from constants import *
+from .constants import *
 
 
 class Obstacle(Sprite):
@@ -16,7 +16,10 @@ class Obstacle(Sprite):
         self.image = transform.scale_by(texture, scale)
         self.rect = self.image.get_rect()
 
-        self.rect.midbottom = (x, -self.rect.height) # Criando obstáculo fora da tela para o spawn não ser perceptível
+        self.rect.midbottom = (
+            x,
+            -self.rect.height,
+        )  # Criando obstáculo fora da tela para o spawn não ser perceptível
 
         self.speed = 1
         self.accel = accel
@@ -50,3 +53,9 @@ class Collectable(Sprite):
 
         if self.rect.y > WINDOW_HEIGHT:
             self.kill()
+
+
+__all__ = [
+    "Obstacle",
+    "Collectable",
+]

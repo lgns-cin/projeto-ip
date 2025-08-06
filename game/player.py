@@ -1,7 +1,7 @@
 from pygame.sprite import Sprite
 from pygame.constants import *
 
-from constants import *
+from .constants import *
 
 
 class Player(Sprite):
@@ -12,12 +12,12 @@ class Player(Sprite):
     def __init__(self):
         super().__init__()
 
-        self.image = PLAYER_SPRITE       # textura predefinida
+        self.image = PLAYER_SPRITE  # textura predefinida
         self.rect = self.image.get_rect()
 
         # Levando em conta a distância ao centro do sprite
         self.leftmost = LEFT_WALL + (self.rect.width // 2)
-        self.rightmost  = RIGHT_WALL - (self.rect.width // 2)
+        self.rightmost = RIGHT_WALL - (self.rect.width // 2)
 
         self.rect.center = (self.rightmost, CENTER_Y)
 
@@ -33,7 +33,7 @@ class Player(Sprite):
         if self.detect_jump(keys):
             self.jump()
 
-        ... # Lógica pra receber dano, coletar pontos, etc.
+        ...  # Lógica pra receber dano, coletar pontos, etc.
 
     def detect_jump(self, keys):
         if not self.mid_jump:
@@ -52,5 +52,5 @@ class Player(Sprite):
             self.rect.centerx = min(self.target_pos, self.rect.centerx + self.speed)
         elif self.rect.centerx > self.target_pos:
             self.rect.centerx = max(self.target_pos, self.rect.centerx - self.speed)
-        else: # self.rect.centerx == self.destino
+        else:  # self.rect.centerx == self.destino
             self.mid_jump = False

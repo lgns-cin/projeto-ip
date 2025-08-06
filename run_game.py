@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
-from game.main import run_game
+import pygame
+from game.main import Game
 
 if __name__ == "__main__":
-    run_game()
+    pygame.init()
+    Game().start()

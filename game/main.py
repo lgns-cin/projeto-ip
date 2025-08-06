@@ -1,10 +1,10 @@
 import random
 
-from classes import *
-from player import Player
-from constants import *
+from .classes import *
+from .player import Player
+from .constants import *
 
-from pygame import *
+from pygame import display, time, event, key, constants as pygame_constants
 from pygame.sprite import Group
 
 
@@ -51,13 +51,13 @@ class Game:
             # Analisar eventos
             for evento in event.get():
                 match evento.type:
-                    case constants.QUIT:
+                    case pygame_constants.QUIT:
                         rodando = False
 
-                    case constants.KEYDOWN:
-                        rodando = evento.key != K_ESCAPE
+                    case pygame_constants.KEYDOWN:
+                        rodando = evento.key != pygame_constants.K_ESCAPE
 
-                        if evento.key == K_F11:
+                        if evento.key == pygame_constants.K_F11:
                             self.toggle_fullscreen()
 
             # Lógica de spawn de itens e etc. (aqui está só um teste)
@@ -86,8 +86,3 @@ class Game:
 
             # Atualizar display
             display.flip()
-
-
-if __name__ == "__main__":
-    pygame.init()
-    Game().start()

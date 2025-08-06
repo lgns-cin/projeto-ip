@@ -1,5 +1,6 @@
 import random as rd
 
+
 def gerar_y_coletaveis():
     lista_y = []
 
@@ -20,7 +21,7 @@ def gerar_y_coletaveis():
                     for j in lista_y:
                         if y_arbitrario not in range(j - 70, j + 70):
                             contador2 += 1
-                            
+
                     if contador2 == len(lista_y):
                         if (len(lista_y) < 4) and (y_arbitrario in range(50, 550)):
                             lista_y.append(y_arbitrario)
