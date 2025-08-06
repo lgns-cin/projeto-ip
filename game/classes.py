@@ -1,39 +1,52 @@
-import random as rd
-import pygame as pg
+from pygame.surface import Surface
+from pygame.sprite import Sprite
+from pygame import transform
 
-gota_sprite = pg.image.load("resources/assets/gota.png")
+from constants import *
 
-class Gota:
-    def __init__(self, tamanho):
-        self.sprite = pg.transform.scale(gota_sprite, (tamanho, tamanho))
-        self.tamanho = self.sprite.get_width()
-            
-    def posicao_gota(self, lado):
-        if lado == 2:
-            gota_x = 533
-        else:
-            gota_x = 266
-        
-        gota_y = 0
 
-        return (gota_x, gota_y, self.sprite)
-    
-class Coletavel:
-    SPRITES = [
-        pg.image.load("resources/assets/tecido.png"),
-        pg.image.load("resources/assets/vida.png"),
-        pg.image.load("resources/assets/agulha.png"),
-        pg.image.load("resources/assets/molde da saia.png")
-    ]
+class Obstacle(Sprite):
+    """
+    Classe que representa obstáculos que caem com aceleração não-nula.
+    """
 
-    def __init__(self, tipo, x, y):
-        self.tipo = tipo
-        self.sprite = Coletavel.SPRITES[tipo]
-        self.x = x
-        self.y = y
+    def __init__(self, texture: Surface, scale: float, x: int, accel: float):
+        super().__init__()
 
-    def desenhar(self, surface):
-        surface.blit(self.sprite, (self.x, self.y))
-        
+        self.image = transform.scale_by(texture, scale)
+        self.rect = self.image.get_rect()
 
-        
+        self.rect.midbottom = (x, -self.rect.height) # Criando obstáculo fora da tela para o spawn não ser perceptível
+
+        self.speed = 1
+        self.accel = accel
+
+    def update(self, *args, **kwargs):
+        self.speed += self.accel
+        self.rect.y += self.speed
+
+        if self.rect.y > WINDOW_HEIGHT:
+            self.kill()
+
+
+# Não é funcional, apenas um teste
+class Collectable(Sprite):
+    """
+    Classe que representa um objeto coletável.
+    """
+
+    def __init__(self, textura: Surface, x: int):
+        super().__init__()
+
+        self.image = textura
+        self.rect = self.image.get_rect()
+
+        self.rect.center = (x, -self.rect.height)
+
+        self.speed = 1
+
+    def update(self, *args, **kwargs):
+        self.rect.y += self.speed
+
+        if self.rect.y > WINDOW_HEIGHT:
+            self.kill()

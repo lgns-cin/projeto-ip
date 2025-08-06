@@ -1,110 +1,93 @@
-import pygame
-from pygame.locals import *
-from .classes import Gota
-from .classes import Coletavel
-from .utils import gerar_y_coletaveis
-import random as rd
-from .player import Player
+import random
+
+from classes import *
+from player import Player
+from constants import *
+
+from pygame import *
+from pygame.sprite import Group
 
 
-def run_game():
+class Game:
+    """
+    Classe que representa o jogo, responsável por iniciá-lo e coordenar seus estados.
+    """
+
+    def __init__(self):
+        display.set_caption(WINDOW_TITLE)
+        display.set_icon(WINDOW_ICON)
+
+        self.screen = display.set_mode(WINDOW_SIZE)
+        self.fullscreen = False
+
+        self.clock = time.Clock()
+
+        self.player = Player()
+
+        self.background = Group()
+        self.collectibles = Group()
+        self.obstacles = Group()
+
+    def toggle_fullscreen(self):
+        if self.fullscreen:
+            # Mudando pro tamanho original
+            self.screen = display.set_mode(WINDOW_SIZE)
+        else:
+            # Mudando a resolução da tela antes de mudar para tela cheia
+            display_size = display.get_desktop_sizes().pop()
+            self.screen = display.set_mode(display_size)
+
+            display.toggle_fullscreen()
+
+        self.fullscreen = not self.fullscreen
+
+    def start(self):
+        rodando = True
+
+        while rodando:
+            # Atualizar relógio
+            self.clock.tick(FPS)
+
+            # Analisar eventos
+            for evento in event.get():
+                match evento.type:
+                    case constants.QUIT:
+                        rodando = False
+
+                    case constants.KEYDOWN:
+                        rodando = evento.key != K_ESCAPE
+
+                        if evento.key == K_F11:
+                            self.toggle_fullscreen()
+
+            # Lógica de spawn de itens e etc. (aqui está só um teste)
+            if len(self.obstacles) == 0:
+                scale = 0.5 + random.random()  # 0.5-1.5
+                pos_x = random.randint(LEFT_WALL, RIGHT_WALL)  # 270-540
+                accel = 0.25 + random.random()  # 0.25-1.25
+
+                new_obstacle = Obstacle(OBSTACLE_SPRITE, scale, pos_x, accel)
+                self.obstacles.add(new_obstacle)
+
+            # Atualizar estados
+            keys = key.get_pressed()
+            ...
+            self.obstacles.update()
+            self.player.update(keys=keys)
+
+            # Renderizar: fundo -> coletáveis -> jogador -> obstáculos -> parede?
+            self.screen.fill("black")
+            self.screen.blit(self.player.image, self.player.rect)
+
+            self.obstacles.draw(self.screen)
+
+            self.screen.blit(MAP_SPRITE, (0, 0))  # Teste
+            ...
+
+            # Atualizar display
+            display.flip()
+
+
+if __name__ == "__main__":
     pygame.init()
-
-    # Game window setup
-    win = pygame.display.set_mode((800, 600))
-    map_sprite = pygame.image.load("resources/assets/map_p2.png")
-    map_sprite = pygame.transform.scale(map_sprite, (800, 600))
-    player = Player(266, 500)
-
-    sair = False
-    nova_gota = False
-    nova_gota2 = False
-    coletaveis = False
-    gota_caindo = False
-
-    coletaveis_lista = []
-    lista_y = []
-
-    printou = False
-
-    while not sair:
-        win.blit(map_sprite, (0, 0))
-
-        keys = pygame.key.get_pressed()
-        player.mover(keys)
-        player.desenhar(win)
-
-        if not coletaveis:
-            for i in range(4):
-                coletaveis_lista.append([])
-                sorteio_x = rd.randint(1, 2)
-
-                if sorteio_x == 1:
-                    x_arbitrario = 266
-                else:
-                    x_arbitrario = 533
-
-                if not lista_y:
-                    lista_y = gerar_y_coletaveis()
-
-                coletaveis_lista[i].append(i)
-                coletaveis_lista[i].append(x_arbitrario)
-                coletaveis_lista[i].append(lista_y[i])
-
-        coletaveis = True
-
-        for i in range(4):
-            Coletavel(
-                coletaveis_lista[i][0], coletaveis_lista[i][1], coletaveis_lista[i][2]
-            ).desenhar(win)
-
-        pygame.time.Clock().tick(30)
-
-        # Randomly generate a new Gota if not already present
-        tamanho_gota = rd.randint(50, 100)
-
-        if not nova_gota:
-            gota_x, gota_y, gota_sprite = Gota(tamanho_gota).posicao_gota(
-                rd.randint(1, 2)
-            )
-            nova_gota = True
-
-        win.blit(gota_sprite, (gota_x, gota_y))
-
-        gota_y += 10
-
-        if nova_gota2 and not gota_caindo:
-            gota_x2, gota_y2, gota_sprite2 = Gota(tamanho_gota).posicao_gota(
-                rd.randint(1, 2)
-            )
-            gota_caindo = True
-
-        if nova_gota2:
-            win.blit(gota_sprite2, (gota_x2, gota_y2))
-
-            gota_y2 += 10
-
-            if gota_y2 >= 600:
-                nova_gota2 = False
-                gota_caindo = False
-
-        if (gota_y >= 300) and (not nova_gota2):
-            nova_gota2 = True
-
-        if gota_y >= 600:
-            nova_gota = False
-
-        pygame.display.flip()
-        win.fill((0))
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                sair = True
-            elif event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
-                    sair = True
-                elif event.key == K_F11:  # Pressione F11 para alternar tela cheia
-                    if win.get_flags() & FULLSCREEN:
-                        win = pygame.display.set_mode((800, 600))
-                    else:
-                        win = pygame.display.set_mode((800, 600), FULLSCREEN)
+    Game().start()

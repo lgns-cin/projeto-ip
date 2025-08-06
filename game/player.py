@@ -1,45 +1,56 @@
-import pygame as pg
-from pygame.locals import *
+from pygame.sprite import Sprite
+from pygame.constants import *
 
-class Player:
-    def __init__(self, x, y):
-        self.sprite = pg.image.load("resources/assets/player.png")
-        self.x = x
-        self.y = y
-        self.vel = 5
-        self.pulando = False
-        self.destino_x = x
-        self.vel_pulo = 30  # velocidade do pulo
+from constants import *
 
-    def iniciar_pulo(self, destino):
-        if not self.pulando:
-            self.pulando = True
-            self.destino_x = destino
 
-    def mover(self, keys):
-        # Inicia o pulo se não estiver pulando
-        if not self.pulando:
-            if keys[K_LEFT] and self.x != 266:
-                self.iniciar_pulo(266)
-            elif keys[K_RIGHT] and self.x != 533:
-                self.iniciar_pulo(533)
-        # Executa o pulo animado
-        if self.pulando:
-            if self.x < self.destino_x:
-                self.x += self.vel_pulo
-                if self.x > self.destino_x:
-                    self.x = self.destino_x
-            elif self.x > self.destino_x:
-                self.x -= self.vel_pulo
-                if self.x < self.destino_x:
-                    self.x = self.destino_x
-            if self.x == self.destino_x:
-                self.pulando = False
+class Player(Sprite):
+    """
+    Classe que representa o personagem jogável, que deve responder a inputs e interagir com coletáveis e obstáculos.
+    """
 
-        if keys[K_UP]:
-            self.y -= self.vel
-        if keys[K_DOWN]:
-            self.y += self.vel
+    def __init__(self):
+        super().__init__()
 
-    def desenhar(self, surface):
-        surface.blit(self.sprite, (self.x, self.y))
+        self.image = PLAYER_SPRITE       # textura predefinida
+        self.rect = self.image.get_rect()
+
+        # Levando em conta a distância ao centro do sprite
+        self.leftmost = LEFT_WALL + (self.rect.width // 2)
+        self.rightmost  = RIGHT_WALL - (self.rect.width // 2)
+
+        self.rect.center = (self.rightmost, CENTER_Y)
+
+        self.mid_jump = False
+        self.target_pos = -1
+        self.speed = 30
+
+        self.hp = 100
+
+    def update(self, **kwargs):
+        keys = kwargs.get("keys")
+
+        if self.detect_jump(keys):
+            self.jump()
+
+        ... # Lógica pra receber dano, coletar pontos, etc.
+
+    def detect_jump(self, keys):
+        if not self.mid_jump:
+            if keys[K_LEFT] and self.rect.centerx >= self.rightmost:
+                self.mid_jump = True
+                self.target_pos = self.leftmost
+
+            if keys[K_RIGHT] and self.rect.centerx <= self.leftmost:
+                self.mid_jump = True
+                self.target_pos = self.rightmost
+
+        return self.mid_jump
+
+    def jump(self):
+        if self.rect.centerx < self.target_pos:
+            self.rect.centerx = min(self.target_pos, self.rect.centerx + self.speed)
+        elif self.rect.centerx > self.target_pos:
+            self.rect.centerx = max(self.target_pos, self.rect.centerx - self.speed)
+        else: # self.rect.centerx == self.destino
+            self.mid_jump = False
