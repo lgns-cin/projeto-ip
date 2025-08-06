@@ -55,7 +55,34 @@ class Collectable(Sprite):
             self.kill()
 
 
+class Wall(Sprite):
+    """
+    Classe que representa uma parede com movimento de scroll infinito.
+    """
+
+    def __init__(self, x: int, y: int):
+        super().__init__()
+
+        self.image = WALL_SPRITE
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def update(self, *args, **kwargs):
+        """
+        Atualiza o movimento da parede criando efeito de scroll infinito.
+        """
+        # Mover parede para baixo
+        self.rect.y += 2
+
+        # Reposicionar se saiu da tela (padrão infinito)
+        if self.rect.top >= WINDOW_HEIGHT:
+            wall_height = self.image.get_height()
+            self.rect.y -= wall_height * ((WINDOW_HEIGHT // wall_height) + 2)
+
+
 __all__ = [
     "Obstacle",
     "Collectable",
+    "Wall",
 ]
