@@ -1,19 +1,19 @@
-import pygame as pg
+import pygame
 from pygame.locals import *
-from classes import Gota
-from classes import Coletavel
-import functions as fn
+from .classes import Gota
+from .classes import Coletavel
+from .utils import gerar_y_coletaveis
 import random as rd
-from player import Player
+from .player import Player
 
 
 def run_game():
-    pg.init()
+    pygame.init()
 
     # Game window setup
-    win = pg.display.set_mode((800, 600))
-    map_sprite = pg.image.load("resources/assets/map_p2.png")
-    map_sprite = pg.transform.scale(map_sprite, (800, 600))
+    win = pygame.display.set_mode((800, 600))
+    map_sprite = pygame.image.load("resources/assets/map_p2.png")
+    map_sprite = pygame.transform.scale(map_sprite, (800, 600))
     player = Player(266, 500)
 
     sair = False
@@ -30,7 +30,7 @@ def run_game():
     while not sair:
         win.blit(map_sprite, (0, 0))
 
-        keys = pg.key.get_pressed()
+        keys = pygame.key.get_pressed()
         player.mover(keys)
         player.desenhar(win)
 
@@ -45,7 +45,7 @@ def run_game():
                     x_arbitrario = 533
 
                 if not lista_y:
-                    lista_y = fn.gerar_y_coletaveis()
+                    lista_y = gerar_y_coletaveis()
 
                 coletaveis_lista[i].append(i)
                 coletaveis_lista[i].append(x_arbitrario)
@@ -58,7 +58,7 @@ def run_game():
                 coletaveis_lista[i][0], coletaveis_lista[i][1], coletaveis_lista[i][2]
             ).desenhar(win)
 
-        pg.time.Clock().tick(30)
+        pygame.time.Clock().tick(30)
 
         # Randomly generate a new Gota if not already present
         tamanho_gota = rd.randint(50, 100)
@@ -94,10 +94,10 @@ def run_game():
         if gota_y >= 600:
             nova_gota = False
 
-        pg.display.flip()
+        pygame.display.flip()
         win.fill((0))
 
-        for event in pg.event.get():
+        for event in pygame.event.get():
             if event.type == QUIT:
                 sair = True
             elif event.type == KEYDOWN:
@@ -105,6 +105,6 @@ def run_game():
                     sair = True
                 elif event.key == K_F11:  # Pressione F11 para alternar tela cheia
                     if win.get_flags() & FULLSCREEN:
-                        win = pg.display.set_mode((800, 600))
+                        win = pygame.display.set_mode((800, 600))
                     else:
-                        win = pg.display.set_mode((800, 600), FULLSCREEN)
+                        win = pygame.display.set_mode((800, 600), FULLSCREEN)
