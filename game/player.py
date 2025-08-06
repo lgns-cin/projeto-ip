@@ -28,7 +28,7 @@ class Player(Sprite):
 
         # Parâmetros do salto
         self.jump_config = {
-            "speed": 30,  # número de frames da animação do salto
+            "speed": 20,  # número de frames da animação do salto
             "height": LANE_WIDTH * 3,  # altura máxima do salto
             "flip_threshold": 0.75,  # momento para inverter sprite (75% do salto)
         }
