@@ -29,6 +29,8 @@ class Game:
         self.obstacles = Group()
         self.walls = Group()
 
+        self.game_speed = LANE_WIDTH // 10
+
         # Criar paredes nas bordas
         self.create_walls()
 
@@ -109,14 +111,14 @@ class Game:
         left_wall_x = LEFT_WALL_EDGE - wall_width
         for i in range(num_wall_pieces):
             y_pos = i * wall_height
-            left_wall = Wall(left_wall_x, y_pos)
+            left_wall = Wall(left_wall_x, y_pos, self.game_speed)
             self.walls.add(left_wall)
 
         # Criar parede direita
         right_wall_x = RIGHT_WALL_EDGE
         for i in range(num_wall_pieces):
             y_pos = i * wall_height
-            right_wall = Wall(right_wall_x, y_pos)
+            right_wall = Wall(right_wall_x, y_pos, self.game_speed)
             self.walls.add(right_wall)
 
     def start(self):
@@ -151,7 +153,7 @@ class Game:
             keys = key.get_pressed()
             ...
             self.obstacles.update()
-            self.walls.update()
+            self.walls.update(speed=self.game_speed)
             self.player.update(keys=keys)
 
             # Renderização
@@ -161,3 +163,6 @@ class Game:
 
             # Atualizar display
             display.flip()
+
+            # Aumentar a velocidade do jogo gradualmente
+            # self.game_speed *= 1.0005

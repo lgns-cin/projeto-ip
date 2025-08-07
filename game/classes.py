@@ -60,20 +60,40 @@ class Wall(Sprite):
     Classe que representa uma parede com movimento de scroll infinito.
     """
 
-    def __init__(self, x: int, y: int):
+    # Velocidade compartilhada por todas as instâncias de Wall
+
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        initial_speed: int,
+    ):
         super().__init__()
 
         self.image = WALL_SPRITE
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        self.shared_speed = initial_speed
+
+    def set_speed(self, new_speed):
+        """Define uma nova velocidade para todas as paredes."""
+        self.shared_speed = max(0, new_speed)  # Não permitir velocidade negativa
+
+    def get_speed(self):
+        """Retorna a velocidade atual das paredes."""
+        return self.shared_speed
 
     def update(self, *args, **kwargs):
         """
         Atualiza o movimento da parede criando efeito de scroll infinito.
         """
-        # Mover parede para baixo
-        self.rect.y += 2
+
+        if "speed" in kwargs:
+            self.set_speed(kwargs["speed"])
+
+        # Usar velocidade compartilhada da classe
+        self.rect.y += self.shared_speed
 
         # Reposicionar se saiu da tela (padrão infinito)
         if self.rect.top >= WINDOW_HEIGHT:
