@@ -10,7 +10,7 @@ class Player(Sprite):
     Classe que representa o personagem jogável, que deve responder a inputs e interagir com coletáveis e obstáculos.
     """
 
-    def __init__(self):
+    def __init__(self, initial_speed: int):
         super().__init__()
 
         self.image = PLAYER_SPRITE  # textura predefinida
@@ -28,9 +28,9 @@ class Player(Sprite):
 
         # Parâmetros do salto
         self.jump_config = {
-            "speed": 20,  # número de frames da animação do salto
+            "speed": 160 // initial_speed,  # número de frames da animação do salto
             "height": LANE_WIDTH * 3,  # altura máxima do salto
-            "flip_threshold": 0.75,  # momento para inverter sprite (75% do salto)
+            "flip_threshold": 0.5,  # momento para inverter sprite (75% do salto)
         }
 
         # Estado atual do salto
@@ -49,7 +49,14 @@ class Player(Sprite):
         if self.detect_jump(keys):
             self.jump()
 
+        if kwargs.get("speed"):
+            self.update_speed(kwargs["speed"])
+
         ...  # Lógica pra receber dano, coletar pontos, etc.
+
+    def update_speed(self, new_speed: int):
+        """Atualiza a velocidade de salto do jogador e ajusta parâmetros dependentes."""
+        self.jump_config["speed"] = 160 // new_speed
 
     def detect_jump(self, keys):
         """Detecta se o jogador quer iniciar um salto e configura os parâmetros.

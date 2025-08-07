@@ -21,15 +21,14 @@ class Game:
         self.fullscreen = False
 
         self.clock = time.Clock()
+        self.game_speed = LANE_WIDTH // 10
 
-        self.player = Player()
+        self.player = Player(self.game_speed)
 
         self.background = Group()
         self.collectibles = Group()
         self.obstacles = Group()
         self.walls = Group()
-
-        self.game_speed = LANE_WIDTH // 10
 
         # Criar paredes nas bordas
         self.create_walls()
@@ -154,7 +153,7 @@ class Game:
             ...
             self.obstacles.update()
             self.walls.update(speed=self.game_speed)
-            self.player.update(keys=keys)
+            self.player.update(keys=keys, speed=self.game_speed)
 
             # Renderização
             game_surface = self.render_game()
@@ -165,4 +164,4 @@ class Game:
             display.flip()
 
             # Aumentar a velocidade do jogo gradualmente
-            # self.game_speed *= 1.0005
+            self.game_speed *= 1.000005
