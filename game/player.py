@@ -1,4 +1,4 @@
-from pygame.sprite import Sprite
+from pygame.sprite import Sprite, spritecollide
 from pygame.constants import K_SPACE, K_LEFT, K_RIGHT, K_a, K_d
 from pygame import transform
 
@@ -13,14 +13,14 @@ class Player(Sprite):
     def __init__(self, initial_speed: int):
         super().__init__()
 
-        self.image = PLAYER_SPRITE  # textura predefinida
+        self.image = PLAYER_SPRITE.convert_alpha()  # textura predefinida
         self.rect = self.image.get_rect()
         self.leftmost = LEFT_WALL_EDGE + (self.rect.width // 2)
         self.rightmost = RIGHT_WALL_EDGE - (self.rect.width // 2)
 
         # Iniciar na parede direita
         self.rect.centerx = self.rightmost
-        self.rect.centery = CENTER_Y
+        self.rect.centery = CENTER_Y + 3*LANE_WIDTH
         self.facing_left = False  # False = sprite original (patas para a direita), True = sprite invertido (patas para a esquerda)
 
         self.mid_jump = False
@@ -45,14 +45,20 @@ class Player(Sprite):
 
     def update(self, **kwargs):
         keys = kwargs.get("keys")
+        game = kwargs.get("game")
 
         if self.detect_jump(keys):
             self.jump()
 
-        if kwargs.get("speed"):
-            self.update_speed(kwargs["speed"])
+        self.update_speed(game.game_speed)
 
-        ...  # Lógica pra receber dano, coletar pontos, etc.
+        for obstacle in spritecollide(self, game.obstacles, dokill=True):
+            self.hp -= obstacle.get_damage()
+
+        for collectible in spritecollide(self, game.collectibles, dokill=True):
+            game.score[collectible.get_type()] += 1
+
+        ...
 
     def update_speed(self, new_speed: int):
         """Atualiza a velocidade de salto do jogador e ajusta parâmetros dependentes."""

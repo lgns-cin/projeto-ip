@@ -1,3 +1,5 @@
+import random
+
 from pygame.surface import Surface
 from pygame.sprite import Sprite
 from pygame import transform
@@ -10,10 +12,10 @@ class Obstacle(Sprite):
     Classe que representa obstáculos que caem com aceleração não-nula.
     """
 
-    def __init__(self, texture: Surface, scale: float, x: int, accel: float):
+    def __init__(self, scale: float, x: int, accel: float, base_damage: int):
         super().__init__()
 
-        self.image = transform.scale_by(texture, scale)
+        self.image = transform.scale_by(OBSTACLE_SPRITE.convert_alpha(), scale)
         self.rect = self.image.get_rect()
 
         self.rect.midbottom = (
@@ -24,6 +26,8 @@ class Obstacle(Sprite):
         self.speed = 1
         self.accel = accel
 
+        self.base_damage = base_damage
+
     def update(self, *args, **kwargs):
         self.speed += self.accel
         self.rect.y += self.speed
@@ -31,28 +35,38 @@ class Obstacle(Sprite):
         if self.rect.y > WINDOW_HEIGHT:
             self.kill()
 
+    def get_damage(self):
+        return self.base_damage
 
-# Não é funcional, apenas um teste
-class Collectable(Sprite):
+
+class Collectible(Sprite):
     """
     Classe que representa um objeto coletável.
     """
 
-    def __init__(self, textura: Surface, x: int):
+    def __init__(self, texture: Surface, x: int):
         super().__init__()
 
-        self.image = textura
+        if texture not in COLLECTIBLE_SPRITES.values(): # por precaução
+            texture = random.choice(list(COLLECTIBLE_SPRITES.values()))
+
+        self.image = texture
         self.rect = self.image.get_rect()
 
         self.rect.center = (x, -self.rect.height)
 
-        self.speed = 1
-
     def update(self, *args, **kwargs):
-        self.rect.y += self.speed
+        self.rect.y += kwargs.get("speed")
 
         if self.rect.y > WINDOW_HEIGHT:
             self.kill()
+
+    def get_type(self):
+        for sprite_name in COLLECTIBLE_SPRITES.keys():
+            if self.image == COLLECTIBLE_SPRITES.get(sprite_name):
+                return sprite_name
+
+        return None # não deve acontecer
 
 
 class Wall(Sprite):
@@ -70,7 +84,7 @@ class Wall(Sprite):
     ):
         super().__init__()
 
-        self.image = WALL_SPRITE
+        self.image = WALL_SPRITE.convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -103,6 +117,6 @@ class Wall(Sprite):
 
 __all__ = [
     "Obstacle",
-    "Collectable",
+    "Collectible",
     "Wall",
 ]
