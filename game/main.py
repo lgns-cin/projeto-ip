@@ -24,6 +24,13 @@ class Game:
         self.game_speed = LANE_WIDTH // 10
 
         self.player = Player(self.game_speed)
+        self.score = {
+            "web":    0,
+            "skirt":  0,
+            "needle": 0,
+            "fabric": 0,
+            "mockup": 0
+        }
 
         self.background = Group()
         self.collectibles = Group()
@@ -56,6 +63,7 @@ class Game:
 
         # Desenhar todos os elementos
         self.walls.draw(game_surface)
+        self.collectibles.draw(game_surface)
         game_surface.blit(self.player.image, self.player.rect)
         self.obstacles.draw(game_surface)
 
@@ -139,21 +147,24 @@ class Game:
                         if evento.key == pygame_constants.K_F11:
                             self.toggle_fullscreen()
 
-            # Lógica de spawn de itens e etc. (aqui está só um teste)
-            if len(self.obstacles) == 0:
-                scale = 0.5 + random.random()  # 0.5-1.5
-                pos_x = random.randint(LEFT_WALL_EDGE, RIGHT_WALL_EDGE)
-                accel = 0.25 + random.random()  # 0.25-1.25
-
-                new_obstacle = Obstacle(OBSTACLE_SPRITE, scale, pos_x, accel)
-                self.obstacles.add(new_obstacle)
+            # Lógica de spawn de coletáveis e obstáculos
+            self.create_obstacles()
+            self.create_collectibles()
 
             # Atualizar estados
             keys = key.get_pressed()
             ...
             self.obstacles.update()
-            self.walls.update(speed=self.game_speed)
-            self.player.update(keys=keys, speed=self.game_speed)
+            self.collectibles.update(speed = self.game_speed)
+            self.walls.update(speed = self.game_speed)
+
+            self.player.update(
+                keys = keys,
+                # speed = self.game_speed,
+                # obstacles = self.obstacles,
+                # collectibles = self.collectibles
+                game = self
+            )
 
             # Renderização
             game_surface = self.render_game()
@@ -165,3 +176,23 @@ class Game:
 
             # Aumentar a velocidade do jogo gradualmente
             self.game_speed *= 1.000005
+
+    def create_obstacles(self):
+        # teste
+        if len(self.obstacles) == 0:
+            scale = 0.5 + random.random()  # 0.5-1.5
+            pos_x = random.randint(LEFT_WALL_EDGE, RIGHT_WALL_EDGE)
+            accel = 0.25 + random.random()  # 0.25-1.25
+            damage = (1 + int(self.game_speed * scale / LANE_WIDTH)) * 10
+
+            new_obstacle = Obstacle(scale, pos_x, accel, damage)
+            self.obstacles.add(new_obstacle)
+
+    def create_collectibles(self):
+        # teste
+        if len(self.collectibles) < 2:
+            pos_x = random.randint(LEFT_WALL_EDGE, RIGHT_WALL_EDGE)
+            texture = random.choice(list(COLLECTIBLE_SPRITES.values()))
+
+            new_collectible = Collectible(texture, pos_x)
+            self.collectibles.add(new_collectible)
