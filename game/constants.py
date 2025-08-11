@@ -20,6 +20,12 @@ CENTER_Y = WINDOW_HEIGHT // 2
 LEFT_WALL_EDGE = LANE_WIDTH * 3
 RIGHT_WALL_EDGE = WINDOW_WIDTH - LEFT_WALL_EDGE
 
+
+# --- CONSTANTES DE ESTADO --- #
+START_SCREEN = 0
+PLAYING_GAME = 1
+GAME_OVER = 2
+
 # --- SPRITES --- #
 MAP_SPRITE = pygame.image.load("resources/assets/map_p.jpg")
 WALL_SPRITE = pygame.image.load("resources/assets/wall_piece.png")
@@ -53,5 +59,8 @@ __all__ = [
     "PLAYER_SPRITE",
     "OBSTACLE_SPRITE",
     "WALL_SPRITE",
-    "COLLECTIBLE_SPRITES"
+    "COLLECTIBLE_SPRITES",
+    "START_SCREEN",
+    "PLAYING_GAME",
+    "GAME_OVER"
 ]

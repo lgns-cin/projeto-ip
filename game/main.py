@@ -1,5 +1,7 @@
 import random
 
+import pygame.font
+
 from .classes import *
 from .player import Player
 from .constants import *
@@ -21,6 +23,8 @@ class Game:
         self.fullscreen = False
 
         self.clock = time.Clock()
+        self.state = START_SCREEN
+
         self.game_speed = LANE_WIDTH // 10
 
         self.player = Player(self.game_speed)
@@ -146,36 +150,50 @@ class Game:
 
                         if evento.key == pygame_constants.K_F11:
                             self.toggle_fullscreen()
+                        elif rodando and self.state != PLAYING_GAME:
+                            self.game_speed = LANE_WIDTH // 10
+                            self.player = Player(self.game_speed)
+                            self.state = PLAYING_GAME
 
-            # Lógica de spawn de coletáveis e obstáculos
-            self.create_obstacles()
-            self.create_collectibles()
+            if self.state == START_SCREEN:
+                self.screen.fill("white") # teste
+                ...
+            elif self.state == PLAYING_GAME:
+                # Lógica de spawn de coletáveis e obstáculos
+                self.create_obstacles()
+                self.create_collectibles()
 
-            # Atualizar estados
-            keys = key.get_pressed()
-            ...
-            self.obstacles.update()
-            self.collectibles.update(speed = self.game_speed)
-            self.walls.update(speed = self.game_speed)
+                # Atualizar estados
+                keys = key.get_pressed()
+                ...
+                self.obstacles.update()
+                self.collectibles.update(speed = self.game_speed)
+                self.walls.update(speed = self.game_speed)
 
-            self.player.update(
-                keys = keys,
-                # speed = self.game_speed,
-                # obstacles = self.obstacles,
-                # collectibles = self.collectibles
-                game = self
-            )
+                self.player.update(
+                    keys = keys,
+                    # speed = self.game_speed,
+                    # obstacles = self.obstacles,
+                    # collectibles = self.collectibles
+                    game = self
+                )
 
-            # Renderização
-            game_surface = self.render_game()
-            self.display_game(game_surface)
-            ...
+                # Renderização
+                game_surface = self.render_game()
+                self.display_game(game_surface)
+                ...
+
+                # Aumentar a velocidade do jogo gradualmente
+                self.game_speed *= 1.000005
+
+                if self.player.hp <= 0:
+                    self.state = GAME_OVER
+            elif self.state == GAME_OVER:
+                self.screen.fill("black") # Teste
+                ...
 
             # Atualizar display
             display.flip()
-
-            # Aumentar a velocidade do jogo gradualmente
-            self.game_speed *= 1.000005
 
     def create_obstacles(self):
         # teste
