@@ -1,9 +1,11 @@
 import pygame
 
+pygame.font.init()
+
 
 # --- CONSTANTES DA JANELA --- #
 WINDOW_TITLE = "Jogo"
-WINDOW_ICON = pygame.image.load("resources/assets/vida.png")  # temporário
+WINDOW_ICON = pygame.image.load("resources/assets/web.png")  # temporário
 FPS = 60
 
 WINDOW_WIDTH = 960
@@ -26,21 +28,22 @@ START_SCREEN = 0
 PLAYING_GAME = 1
 GAME_OVER = 2
 
-# --- SPRITES --- #
-MAP_SPRITE = pygame.image.load("resources/assets/map_p.jpg")
-WALL_SPRITE = pygame.image.load("resources/assets/wall_piece.png")
-PLAYER_SPRITE = pygame.transform.scale(
-    pygame.image.load("resources/assets/teireza.png"),
-    (LANE_WIDTH, LANE_WIDTH),
-)
-OBSTACLE_SPRITE = pygame.image.load("resources/assets/gota.png")
+
+# --- ASSETS --- #
+FONT = pygame.font.Font("resources/fonts/04b03.ttf", 24)
+
+MAP_SPRITE = pygame.image.load("resources/assets/background.png")
+LEFT_WALL_SPRITE = pygame.image.load("resources/assets/left_wall.png")
+RIGHT_WALL_SPRITE = pygame.transform.flip(LEFT_WALL_SPRITE, True, False)
+PLAYER_SPRITE = pygame.image.load("resources/assets/player.png")
+OBSTACLE_SPRITE = pygame.image.load("resources/assets/obstacle.png")
+SKIRT_SPRITE = pygame.image.load("resources/assets/skirt.png")
 
 COLLECTIBLE_SPRITES = {
-    "web": pygame.image.load("resources/assets/vida.png"),
-    "skirt": pygame.image.load("resources/assets/saia de filó.png"),
-    "needle": pygame.image.load("resources/assets/agulha.png"),
-    "fabric": pygame.image.load("resources/assets/tecido.png"),
-    "mockup": pygame.image.load("resources/assets/molde da saia.png")
+    "web": pygame.image.load("resources/assets/web.png"),
+    "needle": pygame.image.load("resources/assets/needle.png"),
+    "fabric": pygame.image.load("resources/assets/fabric.png"),
+    "mockup": pygame.image.load("resources/assets/mockup.png")
 }
 
 __all__ = [
@@ -55,10 +58,12 @@ __all__ = [
     "LEFT_WALL_EDGE",
     "RIGHT_WALL_EDGE",
     "LANE_WIDTH",
+    "FONT",
     "MAP_SPRITE",
     "PLAYER_SPRITE",
     "OBSTACLE_SPRITE",
-    "WALL_SPRITE",
+    "LEFT_WALL_SPRITE",
+    "RIGHT_WALL_SPRITE",
     "COLLECTIBLE_SPRITES",
     "START_SCREEN",
     "PLAYING_GAME",
