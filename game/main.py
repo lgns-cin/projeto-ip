@@ -1,13 +1,13 @@
 import random
 
-import pygame.font
-
 from .classes import *
+from .constants import SKIRT_SPRITE
 from .player import Player
 from .constants import *
 
 from pygame import display, time, event, key, constants as pygame_constants
 from pygame.sprite import Group
+from pygame import Surface
 
 
 class Game:
@@ -54,26 +54,92 @@ class Game:
 
         self.fullscreen = not self.fullscreen
 
-    def render_game(self):
+    def render_start_screen(self):
+        """
+        Renderiza todos os elementos da tela inicial em uma surface virtual.
+        """
+
+        game_surface = Surface(WINDOW_SIZE)
+        game_surface.fill("black")
+
+        title = FONT.render("Titulo do jogo", False, "white")
+        title_rect = title.get_rect()
+        title_rect.center = (CENTER_X, CENTER_Y)
+
+        game_surface.blit(title, title_rect)
+
+        return game_surface
+
+    def render_game_screen(self):
         """
         Renderiza todos os elementos do jogo em uma surface virtual.
         """
-        from pygame import Surface
 
         # Criar surface virtual do tamanho do jogo
         game_surface = Surface(WINDOW_SIZE)
         game_surface.fill("black")
-        game_surface.blit(MAP_SPRITE, (0, 0))
+        game_surface.blit(MAP_SPRITE, (240, 0))
 
         # Desenhar todos os elementos
-        self.walls.draw(game_surface)
         self.collectibles.draw(game_surface)
         game_surface.blit(self.player.image, self.player.rect)
         self.obstacles.draw(game_surface)
+        self.walls.draw(game_surface)
+        self.render_gui(game_surface)
 
         return game_surface
 
-    def display_game(self, game_surface):
+    def render_gui(self, surface):
+        x_offset = LANE_WIDTH // 12
+        y_offset = LANE_WIDTH // 12
+
+        hp_text = FONT.render(f"Vida: {self.player.hp}", False, "white")
+        hp_text_rect = hp_text.get_rect()
+        hp_text_rect.topright = (WINDOW_WIDTH - x_offset, y_offset)
+        surface.blit(hp_text, hp_text_rect)
+
+        skirt_text = FONT.render(f"{self.score.get("skirt")}", False, "white")
+        self.render_icon_with_text(surface, skirt_text, SKIRT_SPRITE, RIGHT_WALL_EDGE + 2*x_offset, y_offset)
+
+        needle_text = FONT.render(f"{self.score.get("needle")}", False, "white")
+        self.render_icon_with_text(surface, needle_text, COLLECTIBLE_SPRITES.get("needle"), x_offset, y_offset)
+
+        x_offset += COLLECTIBLE_SPRITES.get("needle").get_width() + LANE_WIDTH // 6
+
+        web_text = FONT.render(f"{self.score.get("fabric")}", False, "white")
+        self.render_icon_with_text(surface, web_text, COLLECTIBLE_SPRITES.get("fabric"), x_offset, y_offset)
+
+        x_offset += COLLECTIBLE_SPRITES.get("fabric").get_width() + LANE_WIDTH // 6
+
+        web_text = FONT.render(f"{self.score.get("mockup")}", False, "white")
+        self.render_icon_with_text(surface, web_text, COLLECTIBLE_SPRITES.get("mockup"), x_offset, y_offset)
+
+
+    def render_icon_with_text(self, surface: Surface, text: Surface, icon: Surface, x_offset, y_offset):
+        offset = (x_offset, y_offset)
+        surface.blit(icon, offset)
+
+        text_offset = (x_offset + icon.get_width(), y_offset)
+        surface.blit(text, text_offset)
+
+    def render_game_over_screen(self):
+        """
+        Renderiza todos os elementos da tela de fim de jogo em uma surface virtual.
+        """
+
+        game_surface = Surface(WINDOW_SIZE)
+        game_surface.fill("black")
+
+        text_str = f"E a chuva derrubou :( A aranha teceu {self.score.get("skirt")} saias e coletou {self.score.get("web")} teias"
+        end_text = FONT.render(text_str, False, "red")
+        text_rect = end_text.get_rect()
+        text_rect.center = (CENTER_X, CENTER_Y)
+
+        game_surface.blit(end_text, text_rect)
+
+        return game_surface
+
+    def display_surface(self, surface):
         """
         Exibe a surface do jogo na tela, escalando se necessário.
         """
@@ -88,7 +154,7 @@ class Game:
 
         if screen_w == WINDOW_WIDTH and screen_h == WINDOW_HEIGHT:
             # Modo janela: copiar diretamente
-            self.screen.blit(game_surface, (0, 0))
+            self.screen.blit(surface, (0, 0))
         else:
             # Tela cheia: escalar mantendo proporção e centralizar
             scale_x = screen_w / WINDOW_WIDTH
@@ -103,7 +169,7 @@ class Game:
             y = (screen_h - new_h) // 2
 
             # Escalar e desenhar
-            scaled_surface = transform.scale(game_surface, (new_w, new_h))
+            scaled_surface = transform.scale(surface, (new_w, new_h))
             self.screen.blit(scaled_surface, (x, y))
 
     def create_walls(self):
@@ -111,8 +177,8 @@ class Game:
         Cria as paredes nas bordas esquerda e direita usando padrão de repetição.
         """
         # Obter dimensões da sprite da parede
-        wall_width = WALL_SPRITE.get_width()
-        wall_height = WALL_SPRITE.get_height()
+        wall_width = LEFT_WALL_SPRITE.get_width()
+        wall_height = LEFT_WALL_SPRITE.get_height()
 
         # Criar um padrão que se repete verticalmente
         # Cobrir a altura da tela + margem extra para o scroll
@@ -122,14 +188,14 @@ class Game:
         left_wall_x = LEFT_WALL_EDGE - wall_width
         for i in range(num_wall_pieces):
             y_pos = i * wall_height
-            left_wall = Wall(left_wall_x, y_pos, self.game_speed)
+            left_wall = Wall(left_wall_x, y_pos, self.game_speed, is_left=True)
             self.walls.add(left_wall)
 
         # Criar parede direita
         right_wall_x = RIGHT_WALL_EDGE
         for i in range(num_wall_pieces):
             y_pos = i * wall_height
-            right_wall = Wall(right_wall_x, y_pos, self.game_speed)
+            right_wall = Wall(right_wall_x, y_pos, self.game_speed, is_left=False)
             self.walls.add(right_wall)
 
     def start(self):
@@ -150,13 +216,17 @@ class Game:
 
                         if evento.key == pygame_constants.K_F11:
                             self.toggle_fullscreen()
-                        elif rodando and self.state != PLAYING_GAME:
-                            self.game_speed = LANE_WIDTH // 10
-                            self.player = Player(self.game_speed)
-                            self.state = PLAYING_GAME
+                        elif rodando:
+                            if self.state == START_SCREEN:
+                                self.game_speed = LANE_WIDTH // 10
+                                self.player = Player(self.game_speed)
+                                self.state = PLAYING_GAME
+                            elif self.state == GAME_OVER:
+                                self.state = START_SCREEN
 
             if self.state == START_SCREEN:
-                self.screen.fill("white") # teste
+                start_screen_surface = self.render_start_screen()
+                self.display_surface(start_screen_surface)
                 ...
             elif self.state == PLAYING_GAME:
                 # Lógica de spawn de coletáveis e obstáculos
@@ -179,17 +249,18 @@ class Game:
                 )
 
                 # Renderização
-                game_surface = self.render_game()
-                self.display_game(game_surface)
-                ...
+                game_surface = self.render_game_screen()
+                self.display_surface(game_surface)
 
                 # Aumentar a velocidade do jogo gradualmente
-                self.game_speed *= 1.000005
+                self.game_speed *= 1.00001
 
+                # Condição de fim
                 if self.player.hp <= 0:
                     self.state = GAME_OVER
             elif self.state == GAME_OVER:
-                self.screen.fill("black") # Teste
+                game_over_surface = self.render_game_over_screen()
+                self.display_surface(game_over_surface)
                 ...
 
             # Atualizar display
@@ -201,7 +272,7 @@ class Game:
             scale = 0.5 + random.random()  # 0.5-1.5
             pos_x = random.randint(LEFT_WALL_EDGE, RIGHT_WALL_EDGE)
             accel = 0.25 + random.random()  # 0.25-1.25
-            damage = (1 + int(self.game_speed * scale / LANE_WIDTH)) * 10
+            damage = int(20 * scale)
 
             new_obstacle = Obstacle(scale, pos_x, accel, damage)
             self.obstacles.add(new_obstacle)
