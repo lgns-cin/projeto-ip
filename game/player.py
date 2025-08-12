@@ -42,6 +42,7 @@ class Player(Sprite):
         }
 
         self.hp = 100
+        self.max_hp = 100
 
     def update(self, **kwargs):
         keys = kwargs.get("keys")
@@ -57,6 +58,16 @@ class Player(Sprite):
 
         for collectible in spritecollide(self, game.collectibles, dokill=True):
             game.score[collectible.get_type()] += 1
+
+            if game.score["needle"] >= 1 and game.score["fabric"] >= 1 and game.score["mockup"] >= 1:
+                game.score["needle"] -= 1
+                game.score["fabric"] -= 1
+                game.score["mockup"] -= 1
+
+                game.score["skirt"] += 1
+
+            if collectible.get_type() == "web":
+                self.hp = min(self.max_hp, self.hp + 5)
 
         ...
 
