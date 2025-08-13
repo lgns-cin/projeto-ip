@@ -1,7 +1,8 @@
 import random
+import pygame
+import math
 
 from .classes import *
-from .constants import SKIRT_SPRITE
 from .player import Player
 from .constants import *
 
@@ -70,11 +71,16 @@ class Game:
         game_surface = Surface(WINDOW_SIZE)
         game_surface.fill("black")
 
-        title = FONT.render("Titulo do jogo", False, "white")
+        title = FONT_TITLE.render("A Dona Aranha", False, "white")
         title_rect = title.get_rect()
         title_rect.center = (CENTER_X, CENTER_Y)
 
+        subtitle = FONT.render("Press any key to start", False, "white")
+        subtitle_rect = subtitle.get_rect()
+        subtitle_rect.center = (CENTER_X, CENTER_Y + 50)
+
         game_surface.blit(title, title_rect)
+        game_surface.blit(subtitle, subtitle_rect)
 
         return game_surface
 
@@ -155,6 +161,28 @@ class Game:
         game_surface.blit(end_text, text_rect)
 
         return game_surface
+    
+    def render_game_won_screen(self):
+        """
+        Renderiza todos os elementos da tela de vitória em uma surface virtual.
+        """
+
+        game_surface = Surface(WINDOW_SIZE)
+        game_surface.fill("black")
+
+        text_str = f"Parabéns! Você venceu! A aranha teceu {self.score.get("skirt")} saias"
+        end_text = FONT.render(text_str, False, "green")
+        text_rect = end_text.get_rect()
+        text_rect.center = (CENTER_X, CENTER_Y)
+        subtext_str = f"Agora a barata possui as 7 saias de filó !"
+        end_subtext = FONT.render(subtext_str, False, "green")
+        subtext_rect = end_text.get_rect()
+        subtext_rect.center = (CENTER_X + 20, CENTER_Y + 50)
+
+        game_surface.blit(end_text, text_rect)
+        game_surface.blit(end_subtext, subtext_rect)
+
+        return game_surface
 
     def display_surface(self, surface):
         """
@@ -216,9 +244,14 @@ class Game:
             self.walls.add(right_wall)
 
     def start(self):
+        menu_loop = False
         rodando = True
 
         while rodando:
+            if not menu_loop and self.state != PLAYING_GAME:
+                self.menu_loop()
+                menu_loop = True
+
             # Atualizar relógio
             self.clock.tick(FPS)
 
@@ -272,9 +305,14 @@ class Game:
             print(f"Erro ao carregar música de fundo: {e}")
 
     def start(self):
+        menu_loop = False
         rodando = True
 
         while rodando:
+            if not menu_loop and self.state != PLAYING_GAME:
+                self.menu_loop()
+                menu_loop = True
+
             # Atualizar relógio
             self.clock.tick(FPS)
 
@@ -293,9 +331,10 @@ class Game:
                             if self.state == START_SCREEN:
                                 self.reset_game()
                                 self.state = PLAYING_GAME
-                            elif self.state == GAME_OVER:
-                                self.state = START_SCREEN
-
+                            elif self.state == GAME_OVER or self.state == GAME_WON:
+                                menu_loop = False
+                                continue  # Reiniciar o jogo
+                                
             if self.state == START_SCREEN:
                 start_screen_surface = self.render_start_screen()
                 self.display_surface(start_screen_surface)
@@ -327,13 +366,22 @@ class Game:
                 # Aumentar a velocidade do jogo gradualmente
                 self.game_speed *= 1.00001
 
-                # Condição de fim
+                # Condição de fim por derrota
                 if self.player.hp <= 0:
                     self.state = GAME_OVER
+
+                # Condição de fim por vitória
+                if self.score["skirt"] >= 6:
+                    self.state = GAME_WON
+
             elif self.state == GAME_OVER:
                 game_over_surface = self.render_game_over_screen()
                 self.display_surface(game_over_surface)
                 ...
+
+            elif self.state == GAME_WON:
+                game_won_surface = self.render_game_won_screen()
+                self.display_surface(game_won_surface)
 
             # Atualizar display
             display.flip()
@@ -409,3 +457,147 @@ class Game:
             texture = COLLECTIBLE_SPRITES[chosen_type]
             new_collectible = Collectible(texture, pos_x)
             self.collectibles.add(new_collectible)
+
+    def menu_loop(self) -> None:
+        clock = pygame.time.Clock()
+
+        # --- helper: escala com proporção e centraliza ---
+        def scale_with_aspect(image: pygame.Surface, target_w: int, target_h: int) -> tuple[pygame.Surface, pygame.Rect]:
+            iw, ih = image.get_size()
+            r_img = iw / ih
+            r_tgt = target_w / target_h
+            if r_tgt > r_img:
+                new_h = target_h
+                new_w = int(new_h * r_img)
+            else:
+                new_w = target_w
+                new_h = int(new_w / r_img)
+            # usa scale no upscale (mais nítido), smoothscale no downscale
+            upscale = new_w > iw or new_h > ih
+            scaler = pygame.transform.scale if upscale else pygame.transform.smoothscale
+            scaled = scaler(image, (new_w, new_h))
+            rect = scaled.get_rect(center=(target_w // 2, target_h // 2))
+            return scaled, rect
+
+        # --- helper: piscada de 1s no fundo antes de iniciar ---
+        def pre_start_blink(cached_bg: pygame.Surface, cached_bg_rect: pygame.Rect, center_x: int, center_y: int, buttons: list[object]) -> None:
+            duration_ms = 1000
+            interval_ms = 120
+            start = pygame.time.get_ticks()
+            visible = True
+            while pygame.time.get_ticks() - start < duration_ms:
+                # permite fechar a janela durante a piscada
+                for ev in pygame.event.get():
+                    if ev.type == pygame.QUIT:
+                        pygame.quit(); raise SystemExit
+
+                self.screen.fill((18, 18, 18))
+                if visible:
+                    cached_bg.set_alpha(255)
+                    self.screen.blit(cached_bg, cached_bg_rect)
+
+                # redesenha UI (título, subtítulo, botões) por cima
+                title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
+                self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
+                subt = FONT.render("Pressione Enter ou clique em Start", True, (180, 180, 180))
+                self.screen.blit(subt, subt.get_rect(center=(center_x, center_y - 90)))
+                for b in buttons:
+                    b.draw(self.screen)
+
+                pygame.display.flip()
+                pygame.time.delay(interval_ms)
+                visible = not visible
+
+        # cria botões uma vez; o centro é atualizado a cada frame
+        buttons = [
+            Button("Start", (0, 0)),
+            Button("Quit",  (0, 0)),
+        ]
+
+        # cache para não reescalar sempre
+        last_size = (None, None)
+        cached_bg = None
+        cached_bg_rect = None
+
+        # parâmetros da onda (opacidade)
+        wave_hz = 0.5          # 0.5 Hz → ciclo de ~2 s
+        alpha_min = 120        # mínimo de opacidade
+        alpha_max = 255        # máximo de opacidade
+        alpha_span = alpha_max - alpha_min
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit(); raise SystemExit
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                        # piscada de 1s e inicia
+                        pre_start_blink(cached_bg, cached_bg_rect, center_x, center_y, buttons)
+                        self.state = START_SCREEN
+                        self.game_speed = LANE_WIDTH // 10
+                        self.player = Player(self.game_speed)
+                        self.score = {
+                            "web":    0,
+                            "skirt":  0,
+                            "needle": 0,
+                            "fabric": 0,
+                            "mockup": 0
+                        }
+                        return
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit(); raise SystemExit
+                    if event.key == pygame.K_F11:
+                        self.toggle_fullscreen()
+                # cliques
+                if buttons[0].was_clicked(event):
+                    pre_start_blink(cached_bg, cached_bg_rect, center_x, center_y, buttons)
+                    self.state = START_SCREEN
+                    self.game_speed = LANE_WIDTH // 10
+                    self.player = Player(self.game_speed)
+                    self.score = {
+                        "web":    0,
+                        "skirt":  0,
+                        "needle": 0,
+                        "fabric": 0,
+                        "mockup": 0
+                    }
+                    return
+                if buttons[1].was_clicked(event):
+                    pygame.quit(); raise SystemExit
+
+            # tamanho atual e centralização
+            w, h = self.screen.get_size()
+            center_x = w // 2
+            center_y = h // 2
+
+            gap = 70
+            buttons[0].rect.center = (center_x, center_y - 10)
+            buttons[1].rect.center = (center_x, center_y - 10 + gap)
+
+            # reescala o fundo apenas quando w/h mudar
+            if (w, h) != last_size:
+                cached_bg, cached_bg_rect = scale_with_aspect(MAIN_MENU_SPRITE, w, h)
+                last_size = (w, h)
+
+            # --- efeito wave de opacidade no fundo ---
+            t = pygame.time.get_ticks() / 1000.0
+            # seno em [0..1]
+            wave01 = 0.5 * (1.0 + math.sin(2.0 * math.pi * wave_hz * t))
+            alpha = int(alpha_min + alpha_span * wave01)
+            cached_bg.set_alpha(alpha)
+
+            # desenha
+            self.screen.fill((18, 18, 18))
+            self.screen.blit(cached_bg, cached_bg_rect)
+
+            title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
+            self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
+
+            subt = FONT.render("Pressione Enter ou clique em Start", True, (180, 180, 180))
+            self.screen.blit(subt, subt.get_rect(center=(center_x, center_y - 90)))
+
+            for b in buttons:
+                b.draw(self.screen)
+
+            pygame.display.flip()
+            clock.tick(60)

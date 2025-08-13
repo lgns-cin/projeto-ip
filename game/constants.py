@@ -28,9 +28,16 @@ RIGHT_WALL_EDGE = WINDOW_WIDTH - LEFT_WALL_EDGE
 START_SCREEN = 0
 PLAYING_GAME = 1
 GAME_OVER = 2
+GAME_WON = 3
+
+
+# --- CONSTANTES DA TELA INICIAL --- #
+WIDTH = 260
+HEIGHT = 60
 
 
 # --- ASSETS --- #
+FONT_TITLE = pygame.font.Font("resources/fonts/04b03.ttf", 48)
 FONT = pygame.font.Font("resources/fonts/04b03.ttf", 24)
 
 MAP_SPRITE = pygame.image.load("resources/assets/background.png")
@@ -39,6 +46,7 @@ RIGHT_WALL_SPRITE = pygame.transform.flip(LEFT_WALL_SPRITE, True, False)
 PLAYER_SPRITE = pygame.image.load("resources/assets/player.png")
 OBSTACLE_SPRITE = pygame.image.load("resources/assets/obstacle.png")
 SKIRT_SPRITE = pygame.image.load("resources/assets/skirt.png")
+MAIN_MENU_SPRITE = pygame.image.load("resources/assets/menu sprite.png")
 
 COLLECTIBLE_SPRITES = {
     "web": pygame.image.load("resources/assets/web.png"),
@@ -65,6 +73,8 @@ __all__ = [
     "RIGHT_WALL_EDGE",
     "LANE_WIDTH",
     "FONT",
+    "FONT_TITLE",
+    "SKIRT_SPRITE",
     "MAP_SPRITE",
     "PLAYER_SPRITE",
     "OBSTACLE_SPRITE",
@@ -75,4 +85,6 @@ __all__ = [
     "START_SCREEN",
     "PLAYING_GAME",
     "GAME_OVER",
+    "GAME_WON",
+    "MAIN_MENU_SPRITE",
 ]
