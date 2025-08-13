@@ -46,7 +46,7 @@ RIGHT_WALL_SPRITE = pygame.transform.flip(LEFT_WALL_SPRITE, True, False)
 PLAYER_SPRITE = pygame.image.load("resources/assets/player.png")
 OBSTACLE_SPRITE = pygame.image.load("resources/assets/obstacle.png")
 SKIRT_SPRITE = pygame.image.load("resources/assets/skirt.png")
-MAIN_MENU_SPRITE = pygame.image.load("resources/assets/menu sprite.png")
+MAIN_MENU_SPRITE = pygame.image.load("resources/assets/menu.png")
 
 COLLECTIBLE_SPRITES = {
     "web": pygame.image.load("resources/assets/web.png"),
