@@ -161,7 +161,7 @@ class Game:
         game_surface.blit(end_text, text_rect)
 
         return game_surface
-    
+
     def render_game_won_screen(self):
         """
         Renderiza todos os elementos da tela de vitória em uma surface virtual.
@@ -170,7 +170,9 @@ class Game:
         game_surface = Surface(WINDOW_SIZE)
         game_surface.fill("black")
 
-        text_str = f"Parabéns! Você venceu! A aranha teceu {self.score.get("skirt")} saias"
+        text_str = (
+            f"Parabéns! Você venceu! A aranha teceu {self.score.get('skirt')} saias"
+        )
         end_text = FONT.render(text_str, False, "green")
         text_rect = end_text.get_rect()
         text_rect.center = (CENTER_X, CENTER_Y)
@@ -334,7 +336,7 @@ class Game:
                             elif self.state == GAME_OVER or self.state == GAME_WON:
                                 menu_loop = False
                                 continue  # Reiniciar o jogo
-                                
+
             if self.state == START_SCREEN:
                 start_screen_surface = self.render_start_screen()
                 self.display_surface(start_screen_surface)
@@ -462,7 +464,9 @@ class Game:
         clock = pygame.time.Clock()
 
         # --- helper: escala com proporção e centraliza ---
-        def scale_with_aspect(image: pygame.Surface, target_w: int, target_h: int) -> tuple[pygame.Surface, pygame.Rect]:
+        def scale_with_aspect(
+            image: pygame.Surface, target_w: int, target_h: int
+        ) -> tuple[pygame.Surface, pygame.Rect]:
             iw, ih = image.get_size()
             r_img = iw / ih
             r_tgt = target_w / target_h
@@ -480,7 +484,13 @@ class Game:
             return scaled, rect
 
         # --- helper: piscada de 1s no fundo antes de iniciar ---
-        def pre_start_blink(cached_bg: pygame.Surface, cached_bg_rect: pygame.Rect, center_x: int, center_y: int, buttons: list[object]) -> None:
+        def pre_start_blink(
+            cached_bg: pygame.Surface,
+            cached_bg_rect: pygame.Rect,
+            center_x: int,
+            center_y: int,
+            buttons: list[object],
+        ) -> None:
             duration_ms = 1000
             interval_ms = 120
             start = pygame.time.get_ticks()
@@ -489,7 +499,8 @@ class Game:
                 # permite fechar a janela durante a piscada
                 for ev in pygame.event.get():
                     if ev.type == pygame.QUIT:
-                        pygame.quit(); raise SystemExit
+                        pygame.quit()
+                        raise SystemExit
 
                 self.screen.fill((18, 18, 18))
                 if visible:
@@ -498,8 +509,12 @@ class Game:
 
                 # redesenha UI (título, subtítulo, botões) por cima
                 title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
-                self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
-                subt = FONT.render("Pressione Enter ou clique em Start", True, (180, 180, 180))
+                self.screen.blit(
+                    title, title.get_rect(center=(center_x, center_y - 140))
+                )
+                subt = FONT.render(
+                    "Pressione Enter ou clique em Start", True, (180, 180, 180)
+                )
                 self.screen.blit(subt, subt.get_rect(center=(center_x, center_y - 90)))
                 for b in buttons:
                     b.draw(self.screen)
@@ -511,7 +526,7 @@ class Game:
         # cria botões uma vez; o centro é atualizado a cada frame
         buttons = [
             Button("Start", (0, 0)),
-            Button("Quit",  (0, 0)),
+            Button("Quit", (0, 0)),
         ]
 
         # cache para não reescalar sempre
@@ -520,50 +535,57 @@ class Game:
         cached_bg_rect = None
 
         # parâmetros da onda (opacidade)
-        wave_hz = 0.5          # 0.5 Hz → ciclo de ~2 s
-        alpha_min = 120        # mínimo de opacidade
-        alpha_max = 255        # máximo de opacidade
+        wave_hz = 0.5  # 0.5 Hz → ciclo de ~2 s
+        alpha_min = 120  # mínimo de opacidade
+        alpha_max = 255  # máximo de opacidade
         alpha_span = alpha_max - alpha_min
 
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit(); raise SystemExit
+                    pygame.quit()
+                    raise SystemExit
                 if event.type == pygame.KEYDOWN:
                     if event.key in (pygame.K_RETURN, pygame.K_SPACE):
                         # piscada de 1s e inicia
-                        pre_start_blink(cached_bg, cached_bg_rect, center_x, center_y, buttons)
+                        pre_start_blink(
+                            cached_bg, cached_bg_rect, center_x, center_y, buttons
+                        )
                         self.state = START_SCREEN
                         self.game_speed = LANE_WIDTH // 10
                         self.player = Player(self.game_speed)
                         self.score = {
-                            "web":    0,
-                            "skirt":  0,
+                            "web": 0,
+                            "skirt": 0,
                             "needle": 0,
                             "fabric": 0,
-                            "mockup": 0
+                            "mockup": 0,
                         }
                         return
                     if event.key == pygame.K_ESCAPE:
-                        pygame.quit(); raise SystemExit
+                        pygame.quit()
+                        raise SystemExit
                     if event.key == pygame.K_F11:
                         self.toggle_fullscreen()
                 # cliques
                 if buttons[0].was_clicked(event):
-                    pre_start_blink(cached_bg, cached_bg_rect, center_x, center_y, buttons)
+                    pre_start_blink(
+                        cached_bg, cached_bg_rect, center_x, center_y, buttons
+                    )
                     self.state = START_SCREEN
                     self.game_speed = LANE_WIDTH // 10
                     self.player = Player(self.game_speed)
                     self.score = {
-                        "web":    0,
-                        "skirt":  0,
+                        "web": 0,
+                        "skirt": 0,
                         "needle": 0,
                         "fabric": 0,
-                        "mockup": 0
+                        "mockup": 0,
                     }
                     return
                 if buttons[1].was_clicked(event):
-                    pygame.quit(); raise SystemExit
+                    pygame.quit()
+                    raise SystemExit
 
             # tamanho atual e centralização
             w, h = self.screen.get_size()
@@ -593,7 +615,9 @@ class Game:
             title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
             self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
 
-            subt = FONT.render("Pressione Enter ou clique em Start", True, (180, 180, 180))
+            subt = FONT.render(
+                "Pressione Enter ou clique em Start", True, (180, 180, 180)
+            )
             self.screen.blit(subt, subt.get_rect(center=(center_x, center_y - 90)))
 
             for b in buttons:
