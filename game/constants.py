@@ -1,6 +1,7 @@
 import pygame
 
 pygame.font.init()
+pygame.mixer.init()  # Inicializar mixer de áudio
 
 
 # --- CONSTANTES DA JANELA --- #
@@ -43,8 +44,13 @@ COLLECTIBLE_SPRITES = {
     "web": pygame.image.load("resources/assets/web.png"),
     "needle": pygame.image.load("resources/assets/needle.png"),
     "fabric": pygame.image.load("resources/assets/fabric.png"),
-    "mockup": pygame.image.load("resources/assets/mockup.png")
+    "mockup": pygame.image.load("resources/assets/mockup.png"),
 }
+
+# --- ÁUDIO --- #
+BACKGROUND_MUSIC = (
+    "resources/sound/Dona Aranha - Instrumental (audio-extractor.net).mp3"
+)
 
 __all__ = [
     "WINDOW_TITLE",
@@ -65,7 +71,8 @@ __all__ = [
     "LEFT_WALL_SPRITE",
     "RIGHT_WALL_SPRITE",
     "COLLECTIBLE_SPRITES",
+    "BACKGROUND_MUSIC",
     "START_SCREEN",
     "PLAYING_GAME",
-    "GAME_OVER"
+    "GAME_OVER",
 ]

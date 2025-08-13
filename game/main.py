@@ -8,6 +8,7 @@ from .constants import *
 from pygame import display, time, event, key, constants as pygame_constants
 from pygame.sprite import Group
 from pygame import Surface
+import pygame.mixer
 
 
 class Game:
@@ -28,18 +29,25 @@ class Game:
         self.game_speed = LANE_WIDTH // 10
 
         self.player = Player(self.game_speed)
-        self.score = {
-            "web":    0,
-            "skirt":  0,
-            "needle": 0,
-            "fabric": 0,
-            "mockup": 0
+        self.score = {"web": 0, "skirt": 0, "needle": 0, "fabric": 0, "mockup": 0}
+
+        # Sistema de spawn melhorado
+        self.spawn_config = {
+            "obstacle_timer": 0,
+            "obstacle_interval": 120,  # frames entre spawns de obstáculos
+            "collectible_timer": 0,
+            "collectible_interval": 180,  # frames entre spawns de coletáveis
+            "max_obstacles": 3,  # máximo de obstáculos na tela
+            "max_collectibles": 2,  # máximo de coletáveis na tela
         }
 
         self.background = Group()
         self.collectibles = Group()
         self.obstacles = Group()
         self.walls = Group()
+
+        # Inicializar e tocar música de fundo
+        self.load_background_music()
 
         # Criar paredes nas bordas
         self.create_walls()
@@ -98,24 +106,33 @@ class Game:
         hp_text_rect.topright = (WINDOW_WIDTH - x_offset, y_offset)
         surface.blit(hp_text, hp_text_rect)
 
-        skirt_text = FONT.render(f"{self.score.get("skirt")}", False, "white")
-        self.render_icon_with_text(surface, skirt_text, SKIRT_SPRITE, RIGHT_WALL_EDGE + 2*x_offset, y_offset)
+        skirt_text = FONT.render(f"{self.score.get('skirt')}", False, "white")
+        self.render_icon_with_text(
+            surface, skirt_text, SKIRT_SPRITE, RIGHT_WALL_EDGE + 2 * x_offset, y_offset
+        )
 
-        needle_text = FONT.render(f"{self.score.get("needle")}", False, "white")
-        self.render_icon_with_text(surface, needle_text, COLLECTIBLE_SPRITES.get("needle"), x_offset, y_offset)
+        needle_text = FONT.render(f"{self.score.get('needle')}", False, "white")
+        self.render_icon_with_text(
+            surface, needle_text, COLLECTIBLE_SPRITES.get("needle"), x_offset, y_offset
+        )
 
         x_offset += COLLECTIBLE_SPRITES.get("needle").get_width() + LANE_WIDTH // 6
 
-        web_text = FONT.render(f"{self.score.get("fabric")}", False, "white")
-        self.render_icon_with_text(surface, web_text, COLLECTIBLE_SPRITES.get("fabric"), x_offset, y_offset)
+        web_text = FONT.render(f"{self.score.get('fabric')}", False, "white")
+        self.render_icon_with_text(
+            surface, web_text, COLLECTIBLE_SPRITES.get("fabric"), x_offset, y_offset
+        )
 
         x_offset += COLLECTIBLE_SPRITES.get("fabric").get_width() + LANE_WIDTH // 6
 
-        web_text = FONT.render(f"{self.score.get("mockup")}", False, "white")
-        self.render_icon_with_text(surface, web_text, COLLECTIBLE_SPRITES.get("mockup"), x_offset, y_offset)
+        web_text = FONT.render(f"{self.score.get('mockup')}", False, "white")
+        self.render_icon_with_text(
+            surface, web_text, COLLECTIBLE_SPRITES.get("mockup"), x_offset, y_offset
+        )
 
-
-    def render_icon_with_text(self, surface: Surface, text: Surface, icon: Surface, x_offset, y_offset):
+    def render_icon_with_text(
+        self, surface: Surface, text: Surface, icon: Surface, x_offset, y_offset
+    ):
         offset = (x_offset, y_offset)
         surface.blit(icon, offset)
 
@@ -130,7 +147,7 @@ class Game:
         game_surface = Surface(WINDOW_SIZE)
         game_surface.fill("black")
 
-        text_str = f"E a chuva derrubou :( A aranha teceu {self.score.get("skirt")} saias e coletou {self.score.get("web")} teias"
+        text_str = f"E a chuva derrubou :( A aranha teceu {self.score.get('skirt')} saias e coletou {self.score.get('web')} teias"
         end_text = FONT.render(text_str, False, "red")
         text_rect = end_text.get_rect()
         text_rect.center = (CENTER_X, CENTER_Y)
@@ -218,8 +235,63 @@ class Game:
                             self.toggle_fullscreen()
                         elif rodando:
                             if self.state == START_SCREEN:
-                                self.game_speed = LANE_WIDTH // 10
-                                self.player = Player(self.game_speed)
+                                self.reset_game()
+                                self.state = PLAYING_GAME
+                            elif self.state == GAME_OVER:
+                                self.state = START_SCREEN
+
+    def reset_game(self):
+        """Reseta o estado do jogo para uma nova partida."""
+        self.game_speed = LANE_WIDTH // 10
+        self.player = Player(self.game_speed)
+        self.score = {"web": 0, "skirt": 0, "needle": 0, "fabric": 0, "mockup": 0}
+
+        # Reset dos timers de spawn
+        self.spawn_config = {
+            "obstacle_timer": 0,
+            "obstacle_interval": 120,
+            "collectible_timer": 0,
+            "collectible_interval": 180,
+            "max_obstacles": 3,
+            "max_collectibles": 2,
+        }
+
+        # Limpar grupos de sprites
+        self.obstacles.empty()
+        self.collectibles.empty()
+
+        # Reiniciar música de fundo
+        self.load_background_music()
+
+    def load_background_music(self):
+        """Carrega e toca a música de fundo do jogo."""
+        try:
+            pygame.mixer.music.load(BACKGROUND_MUSIC)
+            pygame.mixer.music.play(-1)  # -1 significa loop infinito
+        except pygame.error as e:
+            print(f"Erro ao carregar música de fundo: {e}")
+
+    def start(self):
+        rodando = True
+
+        while rodando:
+            # Atualizar relógio
+            self.clock.tick(FPS)
+
+            # Analisar eventos
+            for evento in event.get():
+                match evento.type:
+                    case pygame_constants.QUIT:
+                        rodando = False
+
+                    case pygame_constants.KEYDOWN:
+                        rodando = evento.key != pygame_constants.K_ESCAPE
+
+                        if evento.key == pygame_constants.K_F11:
+                            self.toggle_fullscreen()
+                        elif rodando:
+                            if self.state == START_SCREEN:
+                                self.reset_game()
                                 self.state = PLAYING_GAME
                             elif self.state == GAME_OVER:
                                 self.state = START_SCREEN
@@ -236,16 +308,16 @@ class Game:
                 # Atualizar estados
                 keys = key.get_pressed()
                 ...
-                self.obstacles.update()
-                self.collectibles.update(speed = self.game_speed)
-                self.walls.update(speed = self.game_speed)
+                self.obstacles.update(speed=self.game_speed)
+                self.collectibles.update(speed=self.game_speed)
+                self.walls.update(speed=self.game_speed)
 
                 self.player.update(
-                    keys = keys,
+                    keys=keys,
                     # speed = self.game_speed,
                     # obstacles = self.obstacles,
                     # collectibles = self.collectibles
-                    game = self
+                    game=self,
                 )
 
                 # Renderização
@@ -267,21 +339,73 @@ class Game:
             display.flip()
 
     def create_obstacles(self):
-        # teste
-        if len(self.obstacles) == 0:
-            scale = 0.5 + random.random()  # 0.5-1.5
-            pos_x = random.randint(LEFT_WALL_EDGE, RIGHT_WALL_EDGE)
-            accel = 0.25 + random.random()  # 0.25-1.25
-            damage = int(20 * scale)
+        """
+        Sistema inteligente de spawn de obstáculos com timer e variedade.
+        """
+        self.spawn_config["obstacle_timer"] += 1
 
-            new_obstacle = Obstacle(scale, pos_x, accel, damage)
+        # Verificar se é hora de spawnar e se não excedeu o limite
+        if (
+            self.spawn_config["obstacle_timer"]
+            >= self.spawn_config["obstacle_interval"]
+            and len(self.obstacles) < self.spawn_config["max_obstacles"]
+        ):
+
+            # Reset do timer
+            self.spawn_config["obstacle_timer"] = 0
+
+            # Reduzir intervalo gradualmente para aumentar dificuldade
+            if self.spawn_config["obstacle_interval"] > 60:  # mínimo de 1 segundo
+                self.spawn_config["obstacle_interval"] -= 0.5
+
+            # Gerar propriedades da gota
+            scale = random.uniform(0.3, 1.5)  # Tamanho variado
+
+            # Escolher posição em uma das 3 lanes válidas
+            lane = random.randint(1, 3)
+            lane_center = LEFT_WALL_EDGE + (lane - 0.5) * LANE_WIDTH
+            pos_x = int(lane_center)
+
+            # Dano baseado no tamanho
+            damage = int(15 * scale + random.randint(5, 15))
+
+            new_obstacle = Obstacle(scale, pos_x, damage, self.game_speed)
             self.obstacles.add(new_obstacle)
 
     def create_collectibles(self):
-        # teste
-        if len(self.collectibles) < 2:
-            pos_x = random.randint(LEFT_WALL_EDGE, RIGHT_WALL_EDGE)
-            texture = random.choice(list(COLLECTIBLE_SPRITES.values()))
+        """
+        Sistema inteligente de spawn de coletáveis com probabilidades balanceadas.
+        """
+        self.spawn_config["collectible_timer"] += 1
 
+        # Verificar se é hora de spawnar e se não excedeu o limite
+        if (
+            self.spawn_config["collectible_timer"]
+            >= self.spawn_config["collectible_interval"]
+            and len(self.collectibles) < self.spawn_config["max_collectibles"]
+        ):
+
+            # Reset do timer
+            self.spawn_config["collectible_timer"] = 0
+
+            # Escolher posição em uma das 3 lanes válidas
+            lane = random.randint(1, 3)
+            lane_center = LEFT_WALL_EDGE + (lane - 0.5) * LANE_WIDTH
+            pos_x = int(lane_center)
+
+            # Probabilidades balanceadas para diferentes tipos
+            collectible_odds = {
+                "needle": 30,
+                "fabric": 25,
+                "mockup": 20,
+                "web": 15,
+            }
+
+            # Escolher tipo baseado nas probabilidades
+            collectible_types = list(collectible_odds.keys())
+            odds = list(collectible_odds.values())
+            chosen_type = random.choices(collectible_types, weights=odds)[0]
+
+            texture = COLLECTIBLE_SPRITES[chosen_type]
             new_collectible = Collectible(texture, pos_x)
             self.collectibles.add(new_collectible)

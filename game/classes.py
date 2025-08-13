@@ -10,11 +10,13 @@ from .constants import *
 class Obstacle(Sprite):
     """
     Classe que representa obstáculos que caem com aceleração não-nula.
+    Velocidade é inversamente proporcional ao tamanho.
     """
 
-    def __init__(self, scale: float, x: int, accel: float, base_damage: int):
+    def __init__(self, scale: float, x: int, base_damage: int, game_speed: float = 2):
         super().__init__()
 
+        self.scale = scale
         self.image = transform.scale_by(OBSTACLE_SPRITE.convert_alpha(), scale)
         self.rect = self.image.get_rect()
 
@@ -23,12 +25,33 @@ class Obstacle(Sprite):
             -self.rect.height,
         )  # Criando obstáculo fora da tela para o spawn não ser perceptível
 
-        self.speed = 1
-        self.accel = accel
+        # Velocidade suavemente proporcional ao tamanho
+        # Gotas menores caem um pouco mais rápido, mas não de forma extrema
+        # Fórmula: velocidade diminui conforme o tamanho aumenta, mas de forma suave
+        speed_multiplier = 1.3 - (
+            scale * 0.4
+        )  # Varia de ~0.9 (grande) a ~1.1 (pequena)
+        speed_multiplier = max(
+            0.7, min(1.3, speed_multiplier)
+        )  # Limitar entre 0.7x e 1.3x
+
+        self.base_speed = game_speed * speed_multiplier
+        self.speed = self.base_speed
+
+        # Aceleração mínima e constante para todas as gotas
+        self.accel = 0.05
 
         self.base_damage = base_damage
 
     def update(self, *args, **kwargs):
+        # Obter velocidade do jogo atual se fornecida
+        game_speed = kwargs.get("speed", 2)
+
+        # Recalcular velocidade base se a velocidade do jogo mudou
+        speed_multiplier = 1.3 - (self.scale * 0.4)
+        speed_multiplier = max(0.7, min(1.3, speed_multiplier))
+        self.base_speed = game_speed * speed_multiplier
+
         self.speed += self.accel
         self.rect.y += self.speed
 
@@ -47,7 +70,7 @@ class Collectible(Sprite):
     def __init__(self, texture: Surface, x: int):
         super().__init__()
 
-        if texture not in COLLECTIBLE_SPRITES.values(): # por precaução
+        if texture not in COLLECTIBLE_SPRITES.values():  # por precaução
             texture = random.choice(list(COLLECTIBLE_SPRITES.values()))
 
         self.image = texture
@@ -66,7 +89,7 @@ class Collectible(Sprite):
             if self.image == COLLECTIBLE_SPRITES.get(sprite_name):
                 return sprite_name
 
-        return None # não deve acontecer
+        return None  # não deve acontecer
 
 
 class Wall(Sprite):
@@ -76,16 +99,14 @@ class Wall(Sprite):
 
     # Velocidade compartilhada por todas as instâncias de Wall
 
-    def __init__(
-        self,
-        x: int,
-        y: int,
-        initial_speed: int,
-        is_left: bool
-    ):
+    def __init__(self, x: int, y: int, initial_speed: int, is_left: bool):
         super().__init__()
 
-        self.image = LEFT_WALL_SPRITE.convert_alpha() if is_left else RIGHT_WALL_SPRITE.convert_alpha()
+        self.image = (
+            LEFT_WALL_SPRITE.convert_alpha()
+            if is_left
+            else RIGHT_WALL_SPRITE.convert_alpha()
+        )
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
