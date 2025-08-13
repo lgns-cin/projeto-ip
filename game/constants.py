@@ -6,7 +6,7 @@ pygame.mixer.init()  # Inicializar mixer de áudio
 
 # --- CONSTANTES DA JANELA --- #
 WINDOW_TITLE = "Jogo"
-WINDOW_ICON = pygame.image.load("resources/assets/web.png")  # temporário
+WINDOW_ICON = pygame.image.load("resources/assets/mockup.png")  # temporário
 FPS = 60
 
 WINDOW_WIDTH = 960
@@ -37,8 +37,8 @@ HEIGHT = 60
 
 
 # --- ASSETS --- #
-FONT_TITLE = pygame.font.Font("resources/fonts/04b03.ttf", 48)
-FONT = pygame.font.Font("resources/fonts/04b03.ttf", 24)
+FONT_TITLE = pygame.font.Font("resources/fonts/ari-w9500-bold.ttf", 48)
+FONT = pygame.font.Font("resources/fonts/ari-w9500.ttf", 24)
 
 MAP_SPRITE = pygame.image.load("resources/assets/background.png")
 LEFT_WALL_SPRITE = pygame.image.load("resources/assets/left_wall.png")
