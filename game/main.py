@@ -71,15 +71,43 @@ class Game:
         game_surface = Surface(WINDOW_SIZE)
         game_surface.fill("black")
 
-        title = FONT_TITLE.render("A Dona Aranha", False, "white")
-        title_rect = title.get_rect()
-        title_rect.center = (CENTER_X, CENTER_Y)
+        description = []
 
-        subtitle = FONT.render("Press any key to start", False, "white")
+        description_1 = FONT.render("Cansada de ver sua amiga barata sendo chamada de mentirosa", False, "white")
+        description_rect_1 = description_1.get_rect()
+        description_rect_1.center = (CENTER_X, CENTER_Y - 48)
+        description.append((description_1, description_rect_1))
+
+        description_2 = FONT.render("por não ter 7 saias de filó, a aranha Teireza decidiu costurar", False, "white")
+        description_rect_2 = description_2.get_rect()
+        description_rect_2.center = (CENTER_X, CENTER_Y - 24)
+        description.append((description_2, description_rect_2))
+
+        description_3 = FONT.render("novas saias para que ela completasse sua coleção. Mas... Ops!", False, "white")
+        description_rect_3 = description_3.get_rect()
+        description_rect_3.center = (CENTER_X, CENTER_Y)
+        description.append((description_3, description_rect_3))
+
+        description_4 = FONT.render("A Dona Aranha deixou tudo cair!!! Você ajudará Teireza a recuperar", False, "white")
+        description_rect_4 = description_4.get_rect()
+        description_rect_4.center = (CENTER_X, CENTER_Y + 24)
+        description.append((description_4, description_rect_4))
+
+        description_5 = FONT.render("de costura para que ela possa produzir os presentes de sua amiga.", False, "white")
+        description_rect_5 = description_5.get_rect()
+        description_rect_5.center = (CENTER_X, CENTER_Y + 48)
+        description.append((description_5, description_rect_5))
+
+        description_6 = FONT.render("Suba pelas paredes e tome cuidado para a chuva não a derrubar!", False, "white")
+        description_rect_6 = description_6.get_rect()
+        description_rect_6.center = (CENTER_X, CENTER_Y + 96)
+        description.append((description_6, description_rect_6))
+
+        subtitle = FONT.render("Aperte qualquer botão para começar", False, "white")
         subtitle_rect = subtitle.get_rect()
-        subtitle_rect.center = (CENTER_X, CENTER_Y + 50)
+        subtitle_rect.center = (CENTER_X, CENTER_Y + 120)
 
-        game_surface.blit(title, title_rect)
+        game_surface.blits(description)
         game_surface.blit(subtitle, subtitle_rect)
 
         return game_surface
