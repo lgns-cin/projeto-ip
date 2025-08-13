@@ -1,5 +1,6 @@
 import random
 import pygame
+import math
 
 from .classes import *
 from .player import Player
@@ -331,47 +332,78 @@ class Game:
     def menu_loop(self) -> None:
         clock = pygame.time.Clock()
 
-        # helper local: escala mantendo proporção e centraliza (sem blur no upscale)
+        # --- helper: escala com proporção e centraliza ---
         def scale_with_aspect(image: pygame.Surface, target_w: int, target_h: int) -> tuple[pygame.Surface, pygame.Rect]:
-            img_w, img_h = image.get_size()
-            img_ratio = img_w / img_h
-            target_ratio = target_w / target_h
-
-            if target_ratio > img_ratio:
-                # tela mais "larga": encaixa pela altura
+            iw, ih = image.get_size()
+            r_img = iw / ih
+            r_tgt = target_w / target_h
+            if r_tgt > r_img:
                 new_h = target_h
-                new_w = int(new_h * img_ratio)
+                new_w = int(new_h * r_img)
             else:
-                # tela mais "alta": encaixa pela largura
                 new_w = target_w
-                new_h = int(new_w / img_ratio)
-
-            # escolha do scaler: nítido ao ampliar, suave ao reduzir
-            upscale = (new_w > img_w) or (new_h > img_h)
+                new_h = int(new_w / r_img)
+            # usa scale no upscale (mais nítido), smoothscale no downscale
+            upscale = new_w > iw or new_h > ih
             scaler = pygame.transform.scale if upscale else pygame.transform.smoothscale
             scaled = scaler(image, (new_w, new_h))
-
             rect = scaled.get_rect(center=(target_w // 2, target_h // 2))
             return scaled, rect
 
-        # cria botões uma vez; o centro será atualizado a cada frame
+        # --- helper: piscada de 1s no fundo antes de iniciar ---
+        def pre_start_blink(cached_bg: pygame.Surface, cached_bg_rect: pygame.Rect, center_x: int, center_y: int, buttons: list[object]) -> None:
+            duration_ms = 1000
+            interval_ms = 120
+            start = pygame.time.get_ticks()
+            visible = True
+            while pygame.time.get_ticks() - start < duration_ms:
+                # permite fechar a janela durante a piscada
+                for ev in pygame.event.get():
+                    if ev.type == pygame.QUIT:
+                        pygame.quit(); raise SystemExit
+
+                self.screen.fill((18, 18, 18))
+                if visible:
+                    cached_bg.set_alpha(255)
+                    self.screen.blit(cached_bg, cached_bg_rect)
+
+                # redesenha UI (título, subtítulo, botões) por cima
+                title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
+                self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
+                subt = FONT.render("Pressione Enter ou clique em Start", True, (180, 180, 180))
+                self.screen.blit(subt, subt.get_rect(center=(center_x, center_y - 90)))
+                for b in buttons:
+                    b.draw(self.screen)
+
+                pygame.display.flip()
+                pygame.time.delay(interval_ms)
+                visible = not visible
+
+        # cria botões uma vez; o centro é atualizado a cada frame
         buttons = [
             Button("Start", (0, 0)),
             Button("Quit",  (0, 0)),
         ]
 
-        # cache opcional para evitar reescalar todo frame
+        # cache para não reescalar sempre
         last_size = (None, None)
         cached_bg = None
         cached_bg_rect = None
 
+        # parâmetros da onda (opacidade)
+        wave_hz = 0.5          # 0.5 Hz → ciclo de ~2 s
+        alpha_min = 120        # mínimo de opacidade
+        alpha_max = 255        # máximo de opacidade
+        alpha_span = alpha_max - alpha_min
+
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    raise SystemExit
+                    pygame.quit(); raise SystemExit
                 if event.type == pygame.KEYDOWN:
                     if event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                        # piscada de 1s e inicia
+                        pre_start_blink(cached_bg, cached_bg_rect, center_x, center_y, buttons)
                         self.state = START_SCREEN
                         self.game_speed = LANE_WIDTH // 10
                         self.player = Player(self.game_speed)
@@ -382,14 +414,14 @@ class Game:
                             "fabric": 0,
                             "mockup": 0
                         }
-                        return  # Start com Enter/Espaço
+                        return
                     if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        raise SystemExit
+                        pygame.quit(); raise SystemExit
                     if event.key == pygame.K_F11:
-                        self.toggle_fullscreen()  # o próximo frame já recentra e reescala
-                # cliques nos botões
+                        self.toggle_fullscreen()
+                # cliques
                 if buttons[0].was_clicked(event):
+                    pre_start_blink(cached_bg, cached_bg_rect, center_x, center_y, buttons)
                     self.state = START_SCREEN
                     self.game_speed = LANE_WIDTH // 10
                     self.player = Player(self.game_speed)
@@ -400,41 +432,41 @@ class Game:
                         "fabric": 0,
                         "mockup": 0
                     }
-                    return  # Start
+                    return
                 if buttons[1].was_clicked(event):
-                    pygame.quit()
-                    raise SystemExit
+                    pygame.quit(); raise SystemExit
 
-            # tamanho atual da janela
+            # tamanho atual e centralização
             w, h = self.screen.get_size()
             center_x = w // 2
             center_y = h // 2
 
-            # recentra os botões
             gap = 70
             buttons[0].rect.center = (center_x, center_y - 10)
             buttons[1].rect.center = (center_x, center_y - 10 + gap)
 
-            # --- Fundo mantendo proporção (letterbox/pillarbox se necessário) ---
-            # reescala só quando o tamanho mudar (performance)
+            # reescala o fundo apenas quando w/h mudar
             if (w, h) != last_size:
                 cached_bg, cached_bg_rect = scale_with_aspect(MAIN_MENU_SPRITE, w, h)
                 last_size = (w, h)
 
-            # pinta o "fundo" por baixo (barras laterais ou topo/rodapé, se sobrar espaço)
+            # --- efeito wave de opacidade no fundo ---
+            t = pygame.time.get_ticks() / 1000.0
+            # seno em [0..1]
+            wave01 = 0.5 * (1.0 + math.sin(2.0 * math.pi * wave_hz * t))
+            alpha = int(alpha_min + alpha_span * wave01)
+            cached_bg.set_alpha(alpha)
+
+            # desenha
             self.screen.fill((18, 18, 18))
-            # desenha a imagem centralizada, com proporção preservada
             self.screen.blit(cached_bg, cached_bg_rect)
 
-            # --- Título ---
             title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
             self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
 
-            # --- Subtítulo ---
             subt = FONT.render("Pressione Enter ou clique em Start", True, (180, 180, 180))
             self.screen.blit(subt, subt.get_rect(center=(center_x, center_y - 90)))
 
-            # --- Botões ---
             for b in buttons:
                 b.draw(self.screen)
 
