@@ -1,4 +1,5 @@
 import random
+import pygame
 
 from pygame.surface import Surface
 from pygame.sprite import Sprite
@@ -23,7 +24,7 @@ class Obstacle(Sprite):
             -self.rect.height,
         )  # Criando obstáculo fora da tela para o spawn não ser perceptível
 
-        self.speed = 1
+        self.speed = 0
         self.accel = accel
 
         self.base_damage = base_damage
@@ -115,9 +116,38 @@ class Wall(Sprite):
             wall_height = self.image.get_height()
             self.rect.y -= wall_height * ((WINDOW_HEIGHT // wall_height) + 2)
 
+class Button:
+    def __init__(self, text: str, center: tuple[int, int], size=(260, 60)):
+        self.rect = pygame.Rect(0, 0, *size)
+        self.rect.center = center
+        self.text = text
+        self.font = FONT  # usa fonte default
+        self.base_color = (30, 30, 30)
+        self.hover_color = (60, 60, 60)
+        self.text_color = (255, 255, 255)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        mouse = pygame.mouse.get_pos()
+        is_hover = self.rect.collidepoint(mouse)
+        pygame.draw.rect(
+            surface,
+            self.hover_color if is_hover else self.base_color,
+            self.rect,
+        )
+        label = self.font.render(self.text, True, self.text_color)
+        surface.blit(label, label.get_rect(center=self.rect.center))
+
+    def was_clicked(self, event: pygame.event.Event) -> bool:
+        return (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+            and self.rect.collidepoint(event.pos)
+        )
+
 
 __all__ = [
     "Obstacle",
     "Collectible",
     "Wall",
+    "Button"
 ]
