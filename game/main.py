@@ -302,7 +302,7 @@ class Game:
         try:
             pygame.mixer.music.load(BACKGROUND_MUSIC)
             pygame.mixer.music.play(-1)  # -1 significa loop infinito
-            pygame.mixer.music.set_volume(0.05)  # Volume inicial
+            pygame.mixer.music.set_volume(0.3)  # Volume inicial
         except pygame.error as e:
             print(f"Erro ao carregar música de fundo: {e}")
 
@@ -536,11 +536,11 @@ class Game:
 
         # cria botões uma vez; o centro é atualizado a cada frame
         buttons = [
-            Button("Start", (0, 0), (260, 60)),
-            Button("Vol -", (0, 0), (120, 60)),
-            Button("Vol +", (0, 0), (120, 60)),
-            Button("Mutar", (0, 0), (260, 60)),
-            Button("Quit",  (0, 0), (260, 60)),
+            Button("Começar", (0, 0), (260, 60)),
+            Button("Vol -",   (0, 0), (120, 60)),
+            Button("Vol +",   (0, 0), (120, 60)),
+            Button("Mutar",   (0, 0), (260, 60)),
+            Button("Sair",    (0, 0), (260, 60)),
         ]
 
         # cache para não reescalar sempre
@@ -645,9 +645,9 @@ class Game:
         center_x, center_y = cx // 2, cy // 2
 
         buttons = [
-            Button("Retomar",        (center_x, center_y - 10), (260, 60)),
-            Button("Volume -",       (center_x - 70, center_y + 60), (120, 60)),
-            Button("Volume +",       (center_x + 70, center_y + 60), (120, 60)),
+            Button("Retomar",        (center_x, center_y - 10),         (260, 60)),
+            Button("Volume -",       (center_x - 70, center_y + 60),    (120, 60)),
+            Button("Volume +",       (center_x + 70, center_y + 60),    (120, 60)),
             Button("Mutar/Desmutar", (center_x,        center_y + 130), (260, 60)),
             Button("Menu",           (center_x,        center_y + 200), (260, 60)),
         ]
