@@ -92,12 +92,12 @@ class Game:
         description_rect_3.center = (CENTER_X, CENTER_Y)
         description.append((description_3, description_rect_3))
 
-        description_4 = FONT.render("A Dona Aranha deixou tudo cair!!! Você ajudará Teireza a recuperar", False, "white")
+        description_4 = FONT.render("A Dona Aranha deixou tudo cair!!! Você ajudará Teireza a recuperar os", False, "white")
         description_rect_4 = description_4.get_rect()
         description_rect_4.center = (CENTER_X, CENTER_Y + 24)
         description.append((description_4, description_rect_4))
 
-        description_5 = FONT.render("de costura para que ela possa produzir os presentes de sua amiga.", False, "white")
+        description_5 = FONT.render("materiais de costura para que ela possa produzir os presentes de sua amiga.", False, "white")
         description_rect_5 = description_5.get_rect()
         description_rect_5.center = (CENTER_X, CENTER_Y + 48)
         description.append((description_5, description_rect_5))
