@@ -273,6 +273,7 @@ class Game:
                                 self.reset_game()
                                 self.state = PLAYING_GAME
                             elif self.state == GAME_OVER:
+                                self.load_background_music()  # Reinicia a música ao voltar do game over
                                 self.state = START_SCREEN
 
     def reset_game(self):
@@ -370,10 +371,12 @@ class Game:
 
                 # Condição de fim por derrota
                 if self.player.hp <= 0:
+                    pygame.mixer.music.stop()  # Para a música quando perde
                     self.state = GAME_OVER
 
                 # Condição de fim por vitória
                 if self.score["skirt"] >= 6:
+                    pygame.mixer.music.stop()  # Para a música quando vence
                     self.state = GAME_WON
 
             elif self.state == GAME_OVER:
@@ -561,6 +564,7 @@ class Game:
                             "fabric": 0,
                             "mockup": 0,
                         }
+                        self.load_background_music()  # Reinicia a música
                         return
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
@@ -582,6 +586,7 @@ class Game:
                         "fabric": 0,
                         "mockup": 0,
                     }
+                    self.load_background_music()  # Reinicia a música
                     return
                 if buttons[1].was_clicked(event):
                     pygame.quit()
