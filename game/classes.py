@@ -40,7 +40,7 @@ class Obstacle(Sprite):
         self.speed = self.base_speed
 
         # Aceleração mínima e constante para todas as gotas
-        self.accel = 0.05
+        self.accel = 0.1
 
         self.base_damage = base_damage
 

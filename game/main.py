@@ -367,7 +367,7 @@ class Game:
                 self.display_surface(game_surface)
 
                 # Aumentar a velocidade do jogo gradualmente
-                self.game_speed *= 1.00001
+                self.game_speed *= 1.00015
 
                 # Condição de fim por derrota
                 if self.player.hp <= 0:
@@ -409,10 +409,10 @@ class Game:
 
             # Reduzir intervalo gradualmente para aumentar dificuldade
             if self.spawn_config["obstacle_interval"] > 60:  # mínimo de 1 segundo
-                self.spawn_config["obstacle_interval"] -= 0.5
+                self.spawn_config["obstacle_interval"] -= 1
 
             # Gerar propriedades da gota
-            scale = random.uniform(0.3, 1.5)  # Tamanho variado
+            scale = random.uniform(0.3, 1.5) + (self.game_speed / 100)  # Tamanho variado, aumenta com o decorrer do jogo
 
             # Escolher posição em uma das 3 lanes válidas
             lane = random.randint(1, 3)
