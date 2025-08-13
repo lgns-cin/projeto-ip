@@ -53,6 +53,10 @@ class Game:
         # Criar paredes nas bordas
         self.create_walls()
 
+        # Variável para controle de volume
+        self.music_volume = pygame.mixer.music.get_volume() if pygame.mixer.get_init() else 1.0
+        self._pre_mute_volume = self.music_volume
+
     def toggle_fullscreen(self):
         if self.fullscreen:
             # Voltar ao modo janela
@@ -207,7 +211,7 @@ class Game:
         subtext_str = f"Agora a barata possui as 7 saias de filó !"
         end_subtext = FONT.render(subtext_str, False, "green")
         subtext_rect = end_text.get_rect()
-        subtext_rect.center = (CENTER_X + 20, CENTER_Y + 50)
+        subtext_rect.center = (CENTER_X + 30, CENTER_Y + 50)
 
         game_surface.blit(end_text, text_rect)
         game_surface.blit(end_subtext, subtext_rect)
@@ -273,37 +277,6 @@ class Game:
             right_wall = Wall(right_wall_x, y_pos, self.game_speed, is_left=False)
             self.walls.add(right_wall)
 
-    def start(self):
-        menu_loop = False
-        rodando = True
-
-        while rodando:
-            if not menu_loop and self.state != PLAYING_GAME:
-                self.menu_loop()
-                menu_loop = True
-
-            # Atualizar relógio
-            self.clock.tick(FPS)
-
-            # Analisar eventos
-            for evento in event.get():
-                match evento.type:
-                    case pygame_constants.QUIT:
-                        rodando = False
-
-                    case pygame_constants.KEYDOWN:
-                        rodando = evento.key != pygame_constants.K_ESCAPE
-
-                        if evento.key == pygame_constants.K_F11:
-                            self.toggle_fullscreen()
-                        elif rodando:
-                            if self.state == START_SCREEN:
-                                self.reset_game()
-                                self.state = PLAYING_GAME
-                            elif self.state == GAME_OVER:
-                                self.load_background_music()  # Reinicia a música ao voltar do game over
-                                self.state = START_SCREEN
-
     def reset_game(self):
         """Reseta o estado do jogo para uma nova partida."""
         self.game_speed = LANE_WIDTH // 10
@@ -324,14 +297,12 @@ class Game:
         self.obstacles.empty()
         self.collectibles.empty()
 
-        # Reiniciar música de fundo
-        self.load_background_music()
-
     def load_background_music(self):
         """Carrega e toca a música de fundo do jogo."""
         try:
             pygame.mixer.music.load(BACKGROUND_MUSIC)
             pygame.mixer.music.play(-1)  # -1 significa loop infinito
+            pygame.mixer.music.set_volume(0.05)  # Volume inicial
         except pygame.error as e:
             print(f"Erro ao carregar música de fundo: {e}")
 
@@ -362,7 +333,12 @@ class Game:
                             if self.state == START_SCREEN:
                                 self.reset_game()
                                 self.state = PLAYING_GAME
+                            elif self.state == PLAYING_GAME:
+                                # <<< Tecla P pausa o jogo >>>
+                                if evento.key == pygame_constants.K_p:
+                                    self.pause_menu()
                             elif self.state == GAME_OVER or self.state == GAME_WON:
+                                self.load_background_music()  # Reinicia a música ao voltar do game over
                                 menu_loop = False
                                 continue  # Reiniciar o jogo
 
@@ -395,7 +371,7 @@ class Game:
                 self.display_surface(game_surface)
 
                 # Aumentar a velocidade do jogo gradualmente
-                self.game_speed *= 1.00015
+                self.game_speed *= 1.00005
 
                 # Condição de fim por derrota
                 if self.player.hp <= 0:
@@ -495,9 +471,7 @@ class Game:
         clock = pygame.time.Clock()
 
         # --- helper: escala com proporção e centraliza ---
-        def scale_with_aspect(
-            image: pygame.Surface, target_w: int, target_h: int
-        ) -> tuple[pygame.Surface, pygame.Rect]:
+        def scale_with_aspect(image: pygame.Surface, target_w: int, target_h: int) -> tuple[pygame.Surface, pygame.Rect]:
             iw, ih = image.get_size()
             r_img = iw / ih
             r_tgt = target_w / target_h
@@ -515,37 +489,23 @@ class Game:
             return scaled, rect
 
         # --- helper: piscada de 1s no fundo antes de iniciar ---
-        def pre_start_blink(
-            cached_bg: pygame.Surface,
-            cached_bg_rect: pygame.Rect,
-            center_x: int,
-            center_y: int,
-            buttons: list[object],
-        ) -> None:
+        def pre_start_blink(cached_bg: pygame.Surface, cached_bg_rect: pygame.Rect, center_x: int, center_y: int, buttons: list[object]) -> None:
             duration_ms = 1000
             interval_ms = 120
             start = pygame.time.get_ticks()
             visible = True
             while pygame.time.get_ticks() - start < duration_ms:
-                # permite fechar a janela durante a piscada
                 for ev in pygame.event.get():
                     if ev.type == pygame.QUIT:
-                        pygame.quit()
-                        raise SystemExit
-
+                        pygame.quit(); raise SystemExit
                 self.screen.fill((18, 18, 18))
                 if visible:
                     cached_bg.set_alpha(255)
                     self.screen.blit(cached_bg, cached_bg_rect)
 
-                # redesenha UI (título, subtítulo, botões) por cima
                 title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
-                self.screen.blit(
-                    title, title.get_rect(center=(center_x, center_y - 140))
-                )
-                subt = FONT.render(
-                    "Pressione Enter ou clique em Start", True, (180, 180, 180)
-                )
+                self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
+                subt = FONT.render(f"Enter para jogar • Volume: {vol_pct}", True, (180, 180, 180))
                 self.screen.blit(subt, subt.get_rect(center=(center_x, center_y - 90)))
                 for b in buttons:
                     b.draw(self.screen)
@@ -554,10 +514,33 @@ class Game:
                 pygame.time.delay(interval_ms)
                 visible = not visible
 
+        # --- controle de volume (garante campos) ---
+        if not hasattr(self, "music_volume"):
+            self.music_volume = pygame.mixer.music.get_volume() if pygame.mixer.get_init() else 1.0
+            self._pre_mute_volume = self.music_volume
+
+        def _set_vol(v: float):
+            v = max(0.0, min(1.0, float(v)))
+            if pygame.mixer.get_init():
+                pygame.mixer.music.set_volume(v)
+            self.music_volume = v
+
+        def _vol_down(): _set_vol(self.music_volume - 0.05)
+        def _vol_up():   _set_vol(self.music_volume + 0.05)
+        def _toggle_mute():
+            if self.music_volume > 0.0:
+                self._pre_mute_volume = self.music_volume
+                _set_vol(0.0)
+            else:
+                _set_vol(self._pre_mute_volume if getattr(self, "_pre_mute_volume", 0.0) > 0.0 else 0.5)
+
         # cria botões uma vez; o centro é atualizado a cada frame
         buttons = [
-            Button("Start", (0, 0)),
-            Button("Quit", (0, 0)),
+            Button("Start", (0, 0), (260, 60)),
+            Button("Vol -", (0, 0), (120, 60)),
+            Button("Vol +", (0, 0), (120, 60)),
+            Button("Mutar", (0, 0), (260, 60)),
+            Button("Quit",  (0, 0), (260, 60)),
         ]
 
         # cache para não reescalar sempre
@@ -566,91 +549,85 @@ class Game:
         cached_bg_rect = None
 
         # parâmetros da onda (opacidade)
-        wave_hz = 0.5  # 0.5 Hz → ciclo de ~2 s
-        alpha_min = 120  # mínimo de opacidade
-        alpha_max = 255  # máximo de opacidade
+        wave_hz = 0.5  # 0.5 Hz → ciclo ~2 s
+        alpha_min, alpha_max = 120, 255
         alpha_span = alpha_max - alpha_min
 
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    raise SystemExit
+                    pygame.quit(); raise SystemExit
                 if event.type == pygame.KEYDOWN:
+                    # iniciar
                     if event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                        # piscada de 1s e inicia
-                        pre_start_blink(
-                            cached_bg, cached_bg_rect, center_x, center_y, buttons
-                        )
+                        pre_start_blink(cached_bg, cached_bg_rect, center_x, center_y, buttons)
                         self.state = START_SCREEN
                         self.game_speed = LANE_WIDTH // 10
                         self.player = Player(self.game_speed)
-                        self.score = {
-                            "web": 0,
-                            "skirt": 0,
-                            "needle": 0,
-                            "fabric": 0,
-                            "mockup": 0,
-                        }
-                        self.load_background_music()  # Reinicia a música
+                        self.score = {"web": 0, "skirt": 0, "needle": 0, "fabric": 0, "mockup": 0}
                         return
+                    # sair
                     if event.key == pygame.K_ESCAPE:
-                        pygame.quit()
-                        raise SystemExit
+                        pygame.quit(); raise SystemExit
+                    # fullscreen
                     if event.key == pygame.K_F11:
                         self.toggle_fullscreen()
+                    # atalhos de volume
+                    if event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
+                        _vol_down()
+                    if event.key in (pygame.K_EQUALS, pygame.K_PLUS, pygame.K_KP_PLUS):
+                        _vol_up()
+                    if event.key == pygame.K_m:
+                        _toggle_mute()
+
                 # cliques
-                if buttons[0].was_clicked(event):
-                    pre_start_blink(
-                        cached_bg, cached_bg_rect, center_x, center_y, buttons
-                    )
+                if buttons[0].was_clicked(event):  # Start
+                    pre_start_blink(cached_bg, cached_bg_rect, center_x, center_y, buttons)
                     self.state = START_SCREEN
                     self.game_speed = LANE_WIDTH // 10
                     self.player = Player(self.game_speed)
-                    self.score = {
-                        "web": 0,
-                        "skirt": 0,
-                        "needle": 0,
-                        "fabric": 0,
-                        "mockup": 0,
-                    }
-                    self.load_background_music()  # Reinicia a música
+                    self.score = {"web": 0, "skirt": 0, "needle": 0, "fabric": 0, "mockup": 0}
                     return
-                if buttons[1].was_clicked(event):
-                    pygame.quit()
-                    raise SystemExit
+                if buttons[1].was_clicked(event):  # Vol -
+                    _vol_down()
+                if buttons[2].was_clicked(event):  # Vol +
+                    _vol_up()
+                if buttons[3].was_clicked(event):  # Mutar
+                    _toggle_mute()
+                if buttons[4].was_clicked(event):  # Quit
+                    pygame.quit(); raise SystemExit
 
             # tamanho atual e centralização
             w, h = self.screen.get_size()
-            center_x = w // 2
-            center_y = h // 2
+            center_x, center_y = w // 2, h // 2
 
+            # posicionamento
             gap = 70
-            buttons[0].rect.center = (center_x, center_y - 10)
-            buttons[1].rect.center = (center_x, center_y - 10 + gap)
+            buttons[0].rect.center = (center_x, center_y - 10)            # Start
+            buttons[1].rect.center = (center_x - 70, center_y + 60)      # Vol -
+            buttons[2].rect.center = (center_x + 70, center_y + 60)      # Vol +
+            buttons[3].rect.center = (center_x,        center_y + 130)    # Mutar
+            buttons[4].rect.center = (center_x,        center_y + 200)    # Quit
 
-            # reescala o fundo apenas quando w/h mudar
+            # fundo proporcional (reescala quando w/h mudar)
             if (w, h) != last_size:
                 cached_bg, cached_bg_rect = scale_with_aspect(MAIN_MENU_SPRITE, w, h)
                 last_size = (w, h)
 
-            # --- efeito wave de opacidade no fundo ---
+            # wave de opacidade
             t = pygame.time.get_ticks() / 1000.0
-            # seno em [0..1]
             wave01 = 0.5 * (1.0 + math.sin(2.0 * math.pi * wave_hz * t))
-            alpha = int(alpha_min + alpha_span * wave01)
-            cached_bg.set_alpha(alpha)
+            cached_bg.set_alpha(int(alpha_min + alpha_span * wave01))
 
-            # desenha
+            # desenhar
             self.screen.fill((18, 18, 18))
             self.screen.blit(cached_bg, cached_bg_rect)
 
             title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
             self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
 
-            subt = FONT.render(
-                "Pressione Enter ou clique em Start", True, (180, 180, 180)
-            )
+            vol_pct = int(round(self.music_volume * 100))
+            subt = FONT.render(f"Enter para jogar • Volume: {vol_pct}", True, (180, 180, 180))
             self.screen.blit(subt, subt.get_rect(center=(center_x, center_y - 90)))
 
             for b in buttons:
@@ -658,3 +635,102 @@ class Game:
 
             pygame.display.flip()
             clock.tick(60)
+
+    def pause_menu(self):
+        clock = pygame.time.Clock()
+
+        backdrop = self.render_game_screen()  # seu frame congelado
+
+        cx, cy = self.logical_size if hasattr(self, "logical_size") else (WINDOW_WIDTH, WINDOW_HEIGHT)
+        center_x, center_y = cx // 2, cy // 2
+
+        buttons = [
+            Button("Retomar",        (center_x, center_y - 10), (260, 60)),
+            Button("Volume -",       (center_x - 70, center_y + 60), (120, 60)),
+            Button("Volume +",       (center_x + 70, center_y + 60), (120, 60)),
+            Button("Mutar/Desmutar", (center_x,        center_y + 130), (260, 60)),
+            Button("Menu",           (center_x,        center_y + 200), (260, 60)),
+        ]
+
+        def set_vol(v: float):
+            v = max(0.0, min(1.0, v))
+            if pygame.mixer.get_init():
+                pygame.mixer.music.set_volume(v)
+            self.music_volume = v
+
+        def vol_down(): set_vol(self.music_volume - 0.05)
+        def vol_up():   set_vol(self.music_volume + 0.05)
+        def toggle_mute():
+            if self.music_volume > 0.0:
+                self._pre_mute_volume = self.music_volume
+                set_vol(0.0)
+            else:
+                set_vol(self._pre_mute_volume if getattr(self, "_pre_mute_volume", 0.0) > 0.0 else 0.5)
+
+        paused = True
+        while paused:
+            for ev in pygame.event.get():
+                if ev.type == pygame.QUIT:
+                    pygame.quit(); raise SystemExit
+                if ev.type == pygame.KEYDOWN:
+                    if ev.key in (pygame.K_p, pygame.K_ESCAPE, pygame.K_SPACE, pygame.K_RETURN):
+                        paused = False
+                    elif ev.key == pygame.K_F11:
+                        self.toggle_fullscreen()
+                        # nada além disso: viewport será atualizada no próximo present()
+                elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
+                    # <<< CONVERSÃO PARA COORDENADAS LÓGICAS >>>
+                    lpos = self.to_logical(ev.pos)
+                    if buttons[0].rect.collidepoint(lpos):  # Retomar
+                        paused = False
+                    elif buttons[1].rect.collidepoint(lpos):  # Volume -
+                        vol_down()
+                    elif buttons[2].rect.collidepoint(lpos):  # Volume +
+                        vol_up()
+                    elif buttons[3].rect.collidepoint(lpos):  # Mutar
+                        toggle_mute()
+                    elif buttons[4].rect.collidepoint(lpos):  # Menu
+                        self.state = START_SCREEN
+                        self.start()  # reinicia o jogo
+                        return
+
+            # --- Desenho (no seu pipeline lógico) ---
+            # Se você renderiza em canvas lógico:
+            surface = backdrop.copy()  # mesma resolução lógica do jogo
+            overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 160))
+            surface.blit(overlay, (0, 0))
+
+            vol_pct = int(round(getattr(self, "music_volume", 1.0) * 100))
+            title = FONT_TITLE.render("Pausado", True, "white")
+            sub =   FONT.render(f"Volume: {vol_pct}%", True, (200, 200, 200))
+            surface.blit(title, title.get_rect(center=(center_x, center_y - 120)))
+            surface.blit(sub,   sub.get_rect(center=(center_x, center_y - 70)))
+
+            # <<< PASSA O MOUSE EM COORD. LÓGICAS PARA HOVER CORRETO >>>
+            mouse_logical = self.to_logical(pygame.mouse.get_pos())
+            for b in buttons:
+                b.draw(surface, mouse_pos=mouse_logical)
+
+            # apresenta (se você usa present/viewport)
+            if hasattr(self, "present"):
+                # substitui o quadro atual pelo pause overlay
+                self.canvas.blit(surface, (0, 0))
+                self.present()
+            else:
+                # sem canvas: desenha direto
+                self.screen.blit(surface, (0, 0))
+
+            pygame.display.flip()
+            clock.tick(60)
+
+    def to_logical(self, phys_pos: tuple[int, int]) -> tuple[int, int]:
+        """Converte coordenadas físicas (monitor) para lógicas (mundo do jogo)."""
+        if not hasattr(self, "viewport"):
+            return phys_pos  # sem letterbox: já está no mesmo sistema
+        vx, vy, vw, vh = self.viewport
+        if vw == 0 or vh == 0:
+            return phys_pos
+        lx = (phys_pos[0] - vx) * self.logical_size[0] / vw
+        ly = (phys_pos[1] - vy) * self.logical_size[1] / vh
+        return int(lx), int(ly)

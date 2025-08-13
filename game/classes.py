@@ -139,7 +139,7 @@ class Wall(Sprite):
 
 
 class Button:
-    def __init__(self, text: str, center: tuple[int, int], size=(260, 60)):
+    def __init__(self, text: str, center: tuple[int, int], size: tuple[int, int]):
         self.rect = pygame.Rect(0, 0, *size)
         self.rect.center = center
         self.text = text
@@ -148,13 +148,14 @@ class Button:
         self.hover_color = (60, 60, 60)
         self.text_color = (255, 255, 255)
 
-    def draw(self, surface: pygame.Surface) -> None:
-        mouse = pygame.mouse.get_pos()
-        is_hover = self.rect.collidepoint(mouse)
+    def draw(self, surface: pygame.Surface, mouse_pos: tuple[int, int] | None = None) -> None:
+        if mouse_pos is None:
+            mouse_pos = pygame.mouse.get_pos()  # fallback (procedural)
+        is_hover = self.rect.collidepoint(mouse_pos)
         pygame.draw.rect(
             surface,
             self.hover_color if is_hover else self.base_color,
-            self.rect,
+            self.rect  # cantos retos; acrescente border_radius se quiser arredondar
         )
         label = self.font.render(self.text, True, self.text_color)
         surface.blit(label, label.get_rect(center=self.rect.center))
