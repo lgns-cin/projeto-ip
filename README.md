@@ -74,7 +74,7 @@ O Pygame é leve, fácil de aprender e ideal para protótipos rápidos de jogos 
 - *Programação Orientada a Objetos*: o jogo é estruturado com classes, usando herança; por exemplo, a classe do jogador herda da classe Sprite do Pygame.
 - *Tratamento de eventos*: uso intensivo de eventos do Pygame.
 - *Estrutura condicional e Dicionários*: usados em diversas partes do código.
-- *Controle de fluxo*: "while rodando" é o loop principal do jogo.
+- *Controle de fluxo*: `while running` é o loop principal do jogo.
 - *Modularização*: separação do código em múltiplos arquivos.
 
 ---

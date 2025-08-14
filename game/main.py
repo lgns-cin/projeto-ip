@@ -308,9 +308,9 @@ class Game:
 
     def start(self):
         menu_loop = False
-        rodando = True
+        running = True
 
-        while rodando:
+        while running:
             if not menu_loop and self.state != PLAYING_GAME:
                 self.menu_loop()
                 menu_loop = True
