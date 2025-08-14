@@ -5,7 +5,7 @@ pygame.mixer.init()  # Inicializar mixer de áudio
 
 
 # --- CONSTANTES DA JANELA --- #
-WINDOW_TITLE = "Jogo"
+WINDOW_TITLE = "A Dona Aranha: Missão Filó"
 WINDOW_ICON = pygame.image.load("resources/assets/mockup.png")  # temporário
 FPS = 60
 
