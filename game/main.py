@@ -503,7 +503,7 @@ class Game:
                     cached_bg.set_alpha(255)
                     self.screen.blit(cached_bg, cached_bg_rect)
 
-                title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
+                title = FONT_TITLE.render("A Dona Aranha: Missão Filó", True, (255, 255, 255))
                 self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
                 subt = FONT.render(f"Enter para jogar • Volume: {vol_pct}", True, (180, 180, 180))
                 self.screen.blit(subt, subt.get_rect(center=(center_x, center_y - 90)))
@@ -623,7 +623,7 @@ class Game:
             self.screen.fill((18, 18, 18))
             self.screen.blit(cached_bg, cached_bg_rect)
 
-            title = FONT_TITLE.render("A Dona Aranha", True, (255, 255, 255))
+            title = FONT_TITLE.render("A Dona Aranha: Missão Filó", True, (255, 255, 255))
             self.screen.blit(title, title.get_rect(center=(center_x, center_y - 140)))
 
             vol_pct = int(round(self.music_volume * 100))
