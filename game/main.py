@@ -24,6 +24,8 @@ class Game:
         self.screen = display.set_mode(WINDOW_SIZE)
         self.fullscreen = False
 
+        self.logical_size = WINDOW_SIZE
+
         self.clock = time.Clock()
         self.state = START_SCREEN
 
@@ -220,36 +222,38 @@ class Game:
 
     def display_surface(self, surface):
         """
-        Exibe a surface do jogo na tela, escalando se necessário.
+        Exibe a surface do jogo na tela, escalando e centralizando se necessário.
+        Também define self.viewport para mapear mouse físico -> coordenadas lógicas.
         """
-        from pygame import transform
+        from pygame import transform, Rect
 
-        # Limpar tela real
+        # Limpa a tela física
         self.screen.fill("black")
 
-        # Obter dimensões da tela atual
-        screen_w = self.screen.get_width()
-        screen_h = self.screen.get_height()
+        # Garante a base lógica
+        self.logical_size = WINDOW_SIZE  # (WINDOW_WIDTH, WINDOW_HEIGHT)
 
-        if screen_w == WINDOW_WIDTH and screen_h == WINDOW_HEIGHT:
-            # Modo janela: copiar diretamente
+        screen_w, screen_h = self.screen.get_width(), self.screen.get_height()
+        base_w, base_h = self.logical_size
+
+        if screen_w == base_w and screen_h == base_h:
+            # Modo janela 1:1
             self.screen.blit(surface, (0, 0))
+            self.viewport = Rect(0, 0, base_w, base_h)
         else:
-            # Tela cheia: escalar mantendo proporção e centralizar
-            scale_x = screen_w / WINDOW_WIDTH
-            scale_y = screen_h / WINDOW_HEIGHT
-            scale = min(scale_x, scale_y)
-
-            new_w = int(WINDOW_WIDTH * scale)
-            new_h = int(WINDOW_HEIGHT * scale)
-
-            # Centralizar
+            # Fullscreen / janela redimensionada: letterbox com escala
+            scale = min(screen_w / base_w, screen_h / base_h)
+            new_w = int(base_w * scale)
+            new_h = int(base_h * scale)
             x = (screen_w - new_w) // 2
             y = (screen_h - new_h) // 2
 
-            # Escalar e desenhar
             scaled_surface = transform.scale(surface, (new_w, new_h))
             self.screen.blit(scaled_surface, (x, y))
+
+            # >>> viewport visível (centralizada e escalada)
+            self.viewport = Rect(x, y, new_w, new_h)
+
 
     def create_walls(self):
         """
@@ -325,7 +329,7 @@ class Game:
                         rodando = False
 
                     case pygame_constants.KEYDOWN:
-                        rodando = evento.key != pygame_constants.K_ESCAPE
+                        rodando = evento.key
 
                         if evento.key == pygame_constants.K_F11:
                             self.toggle_fullscreen()
@@ -335,7 +339,7 @@ class Game:
                                 self.state = PLAYING_GAME
                             elif self.state == PLAYING_GAME:
                                 # <<< Tecla P pausa o jogo >>>
-                                if evento.key == pygame_constants.K_p:
+                                if evento.key == pygame_constants.K_ESCAPE:
                                     self.pause_menu()
                             elif self.state == GAME_OVER or self.state == GAME_WON:
                                 self.load_background_music()  # Reinicia a música ao voltar do game over
@@ -637,97 +641,119 @@ class Game:
             clock.tick(60)
 
     def pause_menu(self):
-        clock = pygame.time.Clock()
+        """Overlay de pausa com Retomar / Vol- / Vol+ / Mutar / Menu."""
+        from pygame import Surface, SRCALPHA
 
-        backdrop = self.render_game_screen()  # seu frame congelado
+        clock = time.Clock()
 
-        cx, cy = self.logical_size if hasattr(self, "logical_size") else (WINDOW_WIDTH, WINDOW_HEIGHT)
-        center_x, center_y = cx // 2, cy // 2
+        # snapshot do frame atual (congelado)
+        backdrop = self.render_game_screen()  # sua função que desenha o jogo em Surface(WINDOW_SIZE)
 
+        # Centro em coordenadas lógicas
+        base_w, base_h = self.logical_size
+        cx, cy = base_w // 2, base_h // 2
+
+        # Botões (usam coordenadas lógicas)
         buttons = [
-            Button("Retomar",        (center_x, center_y - 10),         (260, 60)),
-            Button("Volume -",       (center_x - 70, center_y + 60),    (120, 60)),
-            Button("Volume +",       (center_x + 70, center_y + 60),    (120, 60)),
-            Button("Mutar/Desmutar", (center_x,        center_y + 130), (260, 60)),
-            Button("Menu",           (center_x,        center_y + 200), (260, 60)),
+            Button("Retomar",        (cx,        cy - 10), (260, 60)),
+            Button("Volume -",       (cx - 70,  cy + 60), (120, 60)),
+            Button("Volume +",       (cx + 70,  cy + 60), (120, 60)),
+            Button("Mutar/Desmutar", (cx,        cy + 130), (260, 60)),
+            Button("Menu",           (cx,        cy + 200), (260, 60)),
         ]
 
+        # Volume helpers
+        if not hasattr(self, "music_volume"):
+            try:
+                self.music_volume = pygame.mixer.music.get_volume()
+            except Exception:
+                self.music_volume = 1.0
+        self._pre_mute_volume = getattr(self, "_pre_mute_volume", self.music_volume)
+
         def set_vol(v: float):
-            v = max(0.0, min(1.0, v))
-            if pygame.mixer.get_init():
+            v = max(0.0, min(1.0, float(v)))
+            try:
                 pygame.mixer.music.set_volume(v)
+            except Exception:
+                pass
             self.music_volume = v
 
-        def vol_down(): set_vol(self.music_volume - 0.05)
-        def vol_up():   set_vol(self.music_volume + 0.05)
+        def vol_down(): set_vol(self.music_volume - 0.1)
+        def vol_up():   set_vol(self.music_volume + 0.1)
         def toggle_mute():
             if self.music_volume > 0.0:
                 self._pre_mute_volume = self.music_volume
                 set_vol(0.0)
             else:
-                set_vol(self._pre_mute_volume if getattr(self, "_pre_mute_volume", 0.0) > 0.0 else 0.5)
+                set_vol(self._pre_mute_volume if self._pre_mute_volume > 0 else 0.5)
 
         paused = True
         while paused:
-            for ev in pygame.event.get():
-                if ev.type == pygame.QUIT:
+            for ev in event.get():
+                if ev.type == pygame_constants.QUIT:
                     pygame.quit(); raise SystemExit
-                if ev.type == pygame.KEYDOWN:
-                    if ev.key in (pygame.K_p, pygame.K_ESCAPE, pygame.K_SPACE, pygame.K_RETURN):
-                        paused = False
-                    elif ev.key == pygame.K_F11:
-                        self.toggle_fullscreen()
-                        # nada além disso: viewport será atualizada no próximo present()
-                elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1:
-                    # <<< CONVERSÃO PARA COORDENADAS LÓGICAS >>>
+                if ev.type == pygame_constants.KEYDOWN:
+                    if ev.key in (pygame_constants.K_ESCAPE, pygame_constants.K_SPACE, pygame_constants.K_RETURN):
+                        paused = False  # retomar
+                    elif ev.key == pygame_constants.K_F11:
+                        self.toggle_fullscreen()  # viewport será atualizada no próximo display_surface
+                    elif ev.key in (pygame_constants.K_MINUS, pygame_constants.K_KP_MINUS):
+                        vol_down()
+                    elif ev.key in (pygame_constants.K_EQUALS, pygame_constants.K_PLUS, pygame_constants.K_KP_PLUS):
+                        vol_up()
+                    elif ev.key == pygame_constants.K_m:
+                        toggle_mute()
+                elif ev.type == pygame_constants.MOUSEBUTTONDOWN and ev.button == 1:
+                    # <<< clique convertido para coordenadas lógicas >>>
                     lpos = self.to_logical(ev.pos)
                     if buttons[0].rect.collidepoint(lpos):  # Retomar
                         paused = False
-                    elif buttons[1].rect.collidepoint(lpos):  # Volume -
+                    elif buttons[1].rect.collidepoint(lpos):  # Vol -
                         vol_down()
-                    elif buttons[2].rect.collidepoint(lpos):  # Volume +
+                    elif buttons[2].rect.collidepoint(lpos):  # Vol +
                         vol_up()
                     elif buttons[3].rect.collidepoint(lpos):  # Mutar
                         toggle_mute()
                     elif buttons[4].rect.collidepoint(lpos):  # Menu
                         self.state = START_SCREEN
-                        self.start()  # reinicia o jogo
+                        self.start()  # reiniciar o jogo
                         return
 
-            # --- Desenho (no seu pipeline lógico) ---
-            # Se você renderiza em canvas lógico:
-            surface = backdrop.copy()  # mesma resolução lógica do jogo
-            overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+            # ---- desenhar overlay na resolução LÓGICA ----
+            surface = backdrop.copy()  # Surface(WINDOW_SIZE)
+            overlay = Surface(self.logical_size, SRCALPHA)
             overlay.fill((0, 0, 0, 160))
             surface.blit(overlay, (0, 0))
 
-            vol_pct = int(round(getattr(self, "music_volume", 1.0) * 100))
+            vol_pct = int(round(self.music_volume * 100))
             title = FONT_TITLE.render("Pausado", True, "white")
             sub =   FONT.render(f"Volume: {vol_pct}%", True, (200, 200, 200))
-            surface.blit(title, title.get_rect(center=(center_x, center_y - 120)))
-            surface.blit(sub,   sub.get_rect(center=(center_x, center_y - 70)))
+            surface.blit(title, title.get_rect(center=(cx, cy - 120)))
+            surface.blit(sub,   sub.get_rect(center=(cx, cy - 70)))
 
-            # <<< PASSA O MOUSE EM COORD. LÓGICAS PARA HOVER CORRETO >>>
+            # Hover: mouse lógico
             mouse_logical = self.to_logical(pygame.mouse.get_pos())
             for b in buttons:
-                b.draw(surface, mouse_pos=mouse_logical)
+                # seu Button.draw(surface, mouse_pos=None) pode aceitar mouse_pos opcional;
+                # se não aceitar, internamente ele usará pygame.mouse.get_pos(); nesse caso,
+                # você pode adaptar o Button para receber mouse_pos. Aqui fica genérico:
+                try:
+                    b.draw(surface, mouse_pos=mouse_logical)
+                except TypeError:
+                    b.draw(surface)
 
-            # apresenta (se você usa present/viewport)
-            if hasattr(self, "present"):
-                # substitui o quadro atual pelo pause overlay
-                self.canvas.blit(surface, (0, 0))
-                self.present()
-            else:
-                # sem canvas: desenha direto
-                self.screen.blit(surface, (0, 0))
-
-            pygame.display.flip()
+            # ---- apresenta usando o MESMO pipeline do jogo ----
+            self.display_surface(surface)
+            display.flip()
             clock.tick(60)
 
     def to_logical(self, phys_pos: tuple[int, int]) -> tuple[int, int]:
-        """Converte coordenadas físicas (monitor) para lógicas (mundo do jogo)."""
+        """
+        Converte coordenadas físicas (monitor) para lógicas (mundo do jogo),
+        usando self.viewport definida em display_surface(...).
+        """
         if not hasattr(self, "viewport"):
-            return phys_pos  # sem letterbox: já está no mesmo sistema
+            return phys_pos
         vx, vy, vw, vh = self.viewport
         if vw == 0 or vh == 0:
             return phys_pos
