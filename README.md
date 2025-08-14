@@ -40,10 +40,12 @@ O jogo foi desenvolvido com Pygame e organizado em diferentes arquivos para melh
 
 ## 3. Capturas de Tela
 
-> <img align="left" src="https://raw.githubusercontent.com/sofiaremides/IP-GRUPO1/main/trophy.png" width="700">
-> <img src="https://raw.githubusercontent.com/sofiaremides/IP-GRUPO1/main/lobby%20phases.png" alt="Lobby Phases" width="700">
-> <img src="https://raw.githubusercontent.com/sofiaremides/IP-GRUPO1/main/enemy.png" alt="Enemy" width="810">
-
+> <img align="center" src="https://raw.githubusercontent.com/lgns-cin/projeto-ip/dev/resources/screenshots/screenshot1.png" width="960">
+> <img align="center" src="https://raw.githubusercontent.com/lgns-cin/projeto-ip/dev/resources/screenshots/screenshot2.png" width="960">
+> <img align="center" src="https://raw.githubusercontent.com/lgns-cin/projeto-ip/dev/resources/screenshots/screenshot3.png" width="960">
+> <img align="center" src="https://raw.githubusercontent.com/lgns-cin/projeto-ip/dev/resources/screenshots/screenshot4.png" width="960">
+> <img align="center" src="https://raw.githubusercontent.com/lgns-cin/projeto-ip/dev/resources/screenshots/screenshot5.png" width="960">
+> <img align="center" src="https://raw.githubusercontent.com/lgns-cin/projeto-ip/dev/resources/screenshots/screenshot6.png" width="960">
 
 
 ---
@@ -101,10 +103,12 @@ Animação do salto: a aranha deve saltar em trajetória parabólica e mudar de 
 
 ### Instruções:
 
+```
 bash
-git clone (https://github.com/juliaandradel/IP-GRUPO1.git)
+git clone https://github.com/lgns-cin/projeto-ip.git
 cd projeto-ip
 python run_game.py 
+```
 
 
 Use as teclas Espaço, setas ou A (esquerda) e D (direita) para pular de uma parede à outra.
