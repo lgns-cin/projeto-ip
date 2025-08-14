@@ -18,6 +18,8 @@ class Game:
     """
 
     def __init__(self):
+        self.initial_volume = False
+
         display.set_caption(WINDOW_TITLE)
         display.set_icon(WINDOW_ICON)
 
@@ -305,8 +307,10 @@ class Game:
         """Carrega e toca a música de fundo do jogo."""
         try:
             pygame.mixer.music.load(BACKGROUND_MUSIC)
-            pygame.mixer.music.play(-1)  # -1 significa loop infinito
-            pygame.mixer.music.set_volume(0.3)  # Volume inicial
+            pygame.mixer.music.play(-1) 
+            if not self.initial_volume: # -1 significa loop infinito
+                pygame.mixer.music.set_volume(0.3)  # Volume inicial
+                self.initial_volume = True
         except pygame.error as e:
             print(f"Erro ao carregar música de fundo: {e}")
 
